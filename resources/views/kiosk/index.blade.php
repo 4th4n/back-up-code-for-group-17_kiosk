@@ -11,7 +11,7 @@
     @endif
 
     <!-- Title -->
-    <h1 class="text-center mb-5 text-primary fw-bold">Welcome to the Menu</h1>
+    <h1 class="text-center mb-5 text-primary fw-bold">Hungry? We've Got You Covered! 🍽️</h1>
   
     <!-- Category Buttons -->
     <div class="category-container text-left my-4">
@@ -19,10 +19,10 @@
             <a href="{{ route('menu.category', 'breakfast') }}" class="btn btn-outline-primary rounded-pill">Breakfast</a>
             <a href="{{ route('menu.category', 'lunch') }}" class="btn btn-outline-primary rounded-pill">Lunch</a>
             <a href="{{ route('menu.category', 'snacks') }}" class="btn btn-outline-primary rounded-pill">Snacks</a>
-            <a href="{{ route('menu.category', 'cup-noodles') }}" class="btn btn-outline-primary rounded-pill">Cup Noodles</a>
+            <a href="{{ route('menu.category', 'cup noodles') }}" class="btn btn-outline-primary rounded-pill">Cup Noodles</a>
             <a href="{{ route('menu.category', 'drinks') }}" class="btn btn-outline-primary rounded-pill">Drinks</a>
             <a href="{{ route('menu.category', 'biscuits') }}" class="btn btn-outline-primary rounded-pill">Biscuits</a>
-            <a href="{{ route('menu.category', 'junk-foods') }}" class="btn btn-outline-primary rounded-pill">Junk Foods</a>
+            <a href="{{ route('menu.category', 'junk foods') }}" class="btn btn-outline-primary rounded-pill">Junk Foods</a>
             <a href="{{ route('menu.category', 'chocolates') }}" class="btn btn-outline-primary rounded-pill">Chocolates</a>
         </div>
     </div>
@@ -164,91 +164,71 @@
 </div>
 
 <script>
-    /**
-     * Function to confirm deletion of an item
-     * @param {Event} event - The click event
-     * @param {HTMLFormElement} form - The form element to submit
-     */
-    function confirmDelete(event, form) {
-        event.preventDefault(); // Pigilan ang form submission
-        if (confirm('Are you sure you want to delete this item?')) {
-            form.submit(); // Ituloy ang submission kapag confirmed
-        }
+  document.addEventListener("DOMContentLoaded", function () {
+    const voiceSearchBtn = document.getElementById("voice-search-btn");
+    const searchInput = document.getElementById("search-input");
+    const productList = document.getElementById("product-list");
+    const items = document.querySelectorAll(".product-item"); // Get all product items
+
+    // Check if browser supports webkitSpeechRecognition
+    if ("webkitSpeechRecognition" in window) {
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+
+      // Start voice recognition on button click
+      voiceSearchBtn.addEventListener("click", () => {
+        recognition.start();
+      });
+
+      // Process result of voice recognition
+      recognition.onresult = event => {
+        const query = event.results[0][0].transcript;
+        searchInput.value = query; // Display the voice input in the search box
+        filterProducts(query); // Filter products based on the input
+      };
+
+      // Handle voice recognition errors
+      recognition.onerror = event => {
+        console.error("Voice search error:", event.error);
+        alert("Voice search error: " + event.error);
+      };
+    } else {
+      alert("Voice search is not supported in this browser.");
     }
+
+    // Filter products based on search input or voice recognition query
+    function filterProducts(query) {
+      query = query.toLowerCase();
+      let resultsFound = false; // Track if there are matching results
+
+      // Filter the product items
+      items.forEach(item => {
+        const name = item.getAttribute("data-name").toLowerCase();
+        if (name.includes(query)) {
+          item.style.display = "block"; // Show matching items
+          resultsFound = true;
+        } else {
+          item.style.display = "none"; // Hide non-matching items
+        }
+      });
+
+      // If no matching results
+      if (!resultsFound) {
+        alert("No items match your search.");
+        resetProductList(); // Reset to original list
+      }
+    }
+
+    // Reset product list to show all items
+    function resetProductList() {
+      items.forEach(item => {
+        item.style.display = "block"; // Show all items
+      });
+    }
+  });
 </script>
 
-<style>
-    .total-amount {
-        font-size: 1.2rem;
-        font-weight: bold;
-    }
-    .btn-block {
-        width: 100%;
-    }
-</style>
-<!-- Style adjustments -->
- <script>
- document.addEventListener("DOMContentLoaded", function () {
-  const voiceSearchBtn = document.getElementById("voice-search-btn");
-  const searchInput = document.getElementById("search-input");
-  const productList = document.getElementById("product-list");
-
-  // Check if browser supports webkitSpeechRecognition
-  if ("webkitSpeechRecognition" in window) {
-    const recognition = new webkitSpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-
-    // Start voice recognition on button click
-    voiceSearchBtn.addEventListener("click", () => {
-      recognition.start();
-    });
-
-    // Process result of voice recognition
-    recognition.onresult = event => {
-      const query = event.results[0][0].transcript;
-      searchInput.value = query;
-      filterProducts(query);
-    };
-
-    // Handle voice recognition errors
-    recognition.onerror = event => {
-      console.error("Voice search error:", event.error);
-      alert("Voice search error: " + event.error);
-    };
-  } else {
-    alert("Voice search is not supported in this browser.");
-  }
-
-  // Filter products based on search input or voice recognition query
-  function filterProducts(query) {
-    const items = document.querySelectorAll(".product-item");
-    query = query.toLowerCase();
-    
-    let resultsFound = false; // Track if there are matching results
-
-    items.forEach(item => {
-      const name = item.getAttribute("data-name").toLowerCase();
-      if (name.includes(query)) {
-        item.style.display = "block";
-        resultsFound = true;
-      } else {
-        item.style.display = "none";
-      }
-    });
-
-    // Show a message if no results match the search query
-    if (!resultsFound) {
-      productList.innerHTML = `<p class="text-center text-muted">No items match your search.</p>`;
-    }
-  }
-
-  // Event listener for text input in the search box
-  searchInput.addEventListener("input", event => {
-    filterProducts(event.target.value);
-  });
-});   
- </script>
 <style>
     .container-fluid {
         max-width: 100%;
@@ -295,7 +275,7 @@
     .category-buttons .btn-outline-primary:hover {
         background-color:white ; /* Change background color on hover */
         color: black; /* Text color when hovered */
-    }-
+    }
 
     .category-buttons .btn-outline-primary:active {
         background-color: #0056b3; /* Active state background color */
