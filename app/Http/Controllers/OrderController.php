@@ -69,69 +69,70 @@ class OrderController extends Controller
     
   
     public function checkout(Request $request)
-    {
-        DB::beginTransaction(); // Simulan ang database transaction
-    
-        try {
-            // Kunin ang order data mula sa session
-            $orderData = $request->session()->get('order');
-    
-            // I-validate kung may laman ang order
-            if (!$orderData || !is_array($orderData)) {
-                return redirect()->route('kiosk.index')->with('error', 'Walang order na available.');
-            }
-    
-            // Kalkulahin ang kabuuang presyo ng order
-            $totalPrice = collect($orderData)->sum(fn($details) => $details['price'] * $details['quantity']);
-    
-            // Lumikha ng bagong order na may unique order number
-            $order = Order::create([
-                'order_number' => strtoupper(uniqid('ORD-')), // Mas madaling basahin ang order number
-                'total_price' => $totalPrice,
-                'completed' => false,
-            ]);
-    
-            // I-save ang bawat item sa order
-            foreach ($orderData as $itemId => $details) {
-                $item = Item::find($itemId);
-    
-                // I-validate kung available ang item
-                if (!$item) {
-                    DB::rollBack(); // Ibalik ang transaction kung may problema
-                    return redirect()->route('kiosk.index')->with('error', "Item na may ID {$itemId} ay hindi nahanap.");
-                }
-    
-                // Suriin kung sapat ang stock
-                if ($item->quantity < $details['quantity']) {
-                    DB::rollBack(); // Ibalik ang transaction kung kulang ang stock
-                    return redirect()->route('kiosk.index')->with('error', "Kulang ang stock para sa {$item->name}.");
-                }
-    
-                // Bawasan ang stock at i-save
-                $item->decrement('quantity', $details['quantity']);
-    
-                // I-save ang order item
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'item_id' => $itemId,
-                    'quantity' => $details['quantity'],
-                    'price' => $details['price'],
-                ]);
-            }
-    
-            // Linisin ang session order pagkatapos ng checkout
-            $request->session()->forget('order');
-    
-            DB::commit(); // I-save ang transaction sa database
-    
-            // I-redirect sa "view order page" na may dalang order number
-            return redirect()->route('order.view', ['orderNumber' => $order->order_number])
-                ->with('success', "Order #{$order->order_number} na-save at naka-checkout na!");
-        } catch (\Exception $e) {
-            DB::rollBack(); // Ibalik ang transaction kung may error
-            return redirect()->route('kiosk.index')->with('error', 'May error sa pag-checkout: ' . $e->getMessage());
+{
+    DB::beginTransaction(); // Simulan ang database transaction
+
+    try {
+        // Kunin ang order data mula sa session
+        $orderData = $request->session()->get('order');
+
+        // I-validate kung may laman ang order
+        if (!$orderData || !is_array($orderData)) {
+            return redirect()->route('kiosk.index')->with('error', 'Walang order na available.');
         }
+
+        // Kalkulahin ang kabuuang presyo ng order
+        $totalPrice = collect($orderData)->sum(fn($details) => $details['price'] * $details['quantity']);
+
+        // Lumikha ng bagong order na may 4-digit na unique order number
+        $order = Order::create([
+            'order_number' => strtoupper(str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT)), // 4-digit number, padded with leading zeros
+            'total_price' => $totalPrice,
+            'completed' => false,
+        ]);
+
+        // I-save ang bawat item sa order
+        foreach ($orderData as $itemId => $details) {
+            $item = Item::find($itemId);
+
+            // I-validate kung available ang item
+            if (!$item) {
+                DB::rollBack(); // Ibalik ang transaction kung may problema
+                return redirect()->route('kiosk.index')->with('error', "Item na may ID {$itemId} ay hindi nahanap.");
+            }
+
+            // Suriin kung sapat ang stock
+            if ($item->quantity < $details['quantity']) {
+                DB::rollBack(); // Ibalik ang transaction kung kulang ang stock
+                return redirect()->route('kiosk.index')->with('error', "Kulang ang stock para sa {$item->name}.");
+            }
+
+            // Bawasan ang stock at i-save
+            $item->decrement('quantity', $details['quantity']);
+
+            // I-save ang order item
+            OrderItem::create([
+                'order_id' => $order->id,
+                'item_id' => $itemId,
+                'quantity' => $details['quantity'],
+                'price' => $details['price'],
+            ]);
+        }
+
+        // Linisin ang session order pagkatapos ng checkout
+        $request->session()->forget('order');
+
+        DB::commit(); // I-save ang transaction sa database
+
+        // I-redirect sa "view order page" na may dalang order number
+        return redirect()->route('order.view', ['orderNumber' => $order->order_number])
+            ->with('success', "Order #{$order->order_number} na-save at naka-checkout na!");
+    } catch (\Exception $e) {
+        DB::rollBack(); // Ibalik ang transaction kung may error
+        return redirect()->route('kiosk.index')->with('error', 'May error sa pag-checkout: ' . $e->getMessage());
     }
+}
+
     
     public function viewOrder($orderNumber)
     {
@@ -190,27 +191,60 @@ class OrderController extends Controller
 
     
     public function removeFromOrder(Request $request)
-    {
-        // Validate the request (e.g., check if item_id is provided)
-        $request->validate([
-            'item_id' => 'required|integer|exists:items,id',
-        ]);
+{
+    // Validate the request to ensure the item_id is provided and exists
+    $request->validate([
+        'item_id' => 'required|integer|exists:items,id',
+    ]);
 
-        // Retrieve the order from session or database
-        $order = session('order', []);
+    // Get the order from the session
+    $order = session('order', []);
 
-        // Remove the item from the order
-        $itemId = $request->input('item_id');
-        if (isset($order[$itemId])) {
-            unset($order[$itemId]);
-        }
-
-        // Save the updated order back to the session
-        session(['order' => $order]);
-
-        // Redirect back with a success message
-        return redirect()->back()->with('success', 'Item removed from order successfully.');
+    // Remove the item from the order
+    $itemId = $request->input('item_id');
+    if (isset($order[$itemId])) {
+        unset($order[$itemId]);
     }
+
+    // Save the updated order back to the session
+    session(['order' => $order]);
+
+    // Redirect back with a success message
+    return redirect()->back()->with('success', 'Item removed from order successfully.');
+}
+
+
+    public function dailyReport()
+    {
+        // Kunin ang mga paid orders ngayong araw
+        $paidOrdersToday = Order::with('items')
+            ->where('status', 'paid')
+            ->whereDate('created_at', now()->toDateString())
+            ->get();
+
+        // Compute kabuuang halaga ng paid orders ngayong araw
+        $totalPaidAmount = $paidOrdersToday->sum('total_price');
+
+        // Group items na na-order ngayong araw
+        $orderedItems = $paidOrdersToday->flatMap(function ($order) {
+            return $order->items;
+        })->groupBy('id')
+        ->map(function ($items, $itemId) {
+            $firstItem = $items->first();
+            return [
+                'name' => $firstItem->name,
+                'total_quantity' => $items->sum('pivot.quantity'),
+            ];
+        });
+
+        return view('admin.reports', [
+            'paidOrdersToday' => $paidOrdersToday,
+            'totalPaidAmount' => $totalPaidAmount,
+            'orderedItems' => $orderedItems,
+        ]);
+    }
+    
+    
     
 }
 

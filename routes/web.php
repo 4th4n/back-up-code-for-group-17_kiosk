@@ -81,7 +81,7 @@ Route::get('/menu/category/{category}', [ItemController::class, 'showCategory'])
 // In routes/web.php
 Route::patch('/order/{id}/complete', [OrderController::class, 'completeOrder'])->name('order.complete');
 
-
+Route::get('/admin/reports', [OrderController::class, 'dailyReport'])->name('admin.reports');
 // Route::get('order/{orderNumber}/receipt', [OrderController::class, 'generateReceipt'])->name('order.receipt');
 use App\Http\Controllers\CashierController;
 
@@ -92,3 +92,7 @@ Route::post('/cashier/order/{id}/cancel', [CashierController::class, 'cancel'])-
 Route::get('/cashier/staff', [CashierController::class, 'paidOrders'])->name('cashier.paidOrders');
 // routes/web.php
 Route::get('/cashier/receipt/{id}', [CashierController::class, 'generateReceipt'])->name('cashier.generateReceipt');
+Route::get('/cashier/orders', [OrderController::class, 'fetchOrders'])->name('cashier.orders');
+Route::get('/cashier/orders', [CashierController::class, 'fetchOrders'])->name('cashier.fetchOrders');
+
+

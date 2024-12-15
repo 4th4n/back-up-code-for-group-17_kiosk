@@ -71,13 +71,14 @@
                                                     @csrf
                                                     <button type="submit" class="btn btn-success btn-sm">Complete</button>
                                                 </form>
+                                                  <form action="{{ route('cashier.cancel', $order->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                            </form>
                                             @else
                                                 <span class="text-muted">No Actions Available</span>
                                             @endif
-                                            <form action="{{ route('cashier.cancel', $order->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <!-- <button type="submit" class="btn btn-danger btn-sm">Cancel</button> -->
-                                            </form>
+                                          
                                         </td>
                                     </tr>
                                 @endforeach

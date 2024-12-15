@@ -1,4 +1,4 @@
-@extends('admin.dashboard')
+<!-- @extends('admin.dashboard')
 
 @section('content')
 <div class="container-fluid p-4" style="background-color: #f8f9fa; min-height: 100vh;">
@@ -22,4 +22,4 @@
         </div>
     </div>
 </div>
-@endsection
+@endsection -->

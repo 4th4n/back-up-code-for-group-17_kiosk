@@ -137,12 +137,13 @@
                 </div>
             </div>
             <div class="order-item-controls d-flex align-items-center">
-                <span class="order-item-price text-primary fw-bold">₱{{ number_format($details['price'] * $details['quantity'], 2) }}</span>
+                <span class="order-item-price text-primary fw-bold">
+                    ₱{{ number_format($details['price'] * $details['quantity'], 2) }}
+                </span>
                 <form action="{{ route('order.remove') }}" method="POST" class="ms-3">
                     @csrf
                     <input type="hidden" name="item_id" value="{{ $id }}">
-                    <button type="button" class="btn btn-danger btn-sm rounded-circle" 
-                            onclick="confirmDelete(event, this.form)">
+                    <button type="button" class="btn btn-warning btn-sm rounded-circle" onclick="confirmDelete(event, this.form)">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </form>
@@ -292,5 +293,15 @@
             }, 1000); // 3000 milliseconds = 3 seconds
         }
     });
+</script>
+<script>
+    function confirmDelete(event, form) {
+        event.preventDefault(); // Prevent the form from submitting immediately
+
+        // Ask for user confirmation
+        if (confirm("Are you sure you want to remove this item from your order?")) {
+            form.submit(); // Submit the form if confirmed
+        }
+    }
 </script>
 @endsection
