@@ -171,6 +171,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const productList = document.getElementById("product-list");
   const items = document.querySelectorAll(".product-item"); // Get all product items
 
+  // Define a mapping between voice search keywords and category routes
+  const categoryRoutes = {
+    "breakfast": "{{ route('menu.category', 'breakfast') }}",
+    "lunch": "{{ route('menu.category', 'lunch') }}",
+    "snacks": "{{ route('menu.category', 'snacks') }}",
+    "cup noodles": "{{ route('menu.category', 'cup noodles') }}",
+    "drinks": "{{ route('menu.category', 'drinks') }}",
+    "biscuits": "{{ route('menu.category', 'biscuits') }}",
+    "junk foods": "{{ route('menu.category', 'junk foods') }}",
+    "chocolates": "{{ route('menu.category', 'chocolates') }}"
+  };
+
   // Check if browser supports webkitSpeechRecognition
   if ("webkitSpeechRecognition" in window) {
     const recognition = new webkitSpeechRecognition();
@@ -184,9 +196,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Process result of voice recognition
     recognition.onresult = event => {
-      const query = event.results[0][0].transcript;
+      const query = event.results[0][0].transcript.toLowerCase();
       searchInput.value = query; // Display the voice input in the search box
-      filterProducts(query); // Filter products based on the input
+
+      // Check if the query matches any category
+      if (categoryRoutes[query]) {
+        window.location.href = categoryRoutes[query]; // Redirect to the category page
+      } else {
+        filterProducts(query); // Filter products based on the input
+      }
     };
 
     // Handle voice recognition errors
