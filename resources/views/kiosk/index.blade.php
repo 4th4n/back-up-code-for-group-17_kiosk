@@ -165,69 +165,136 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const voiceSearchBtn = document.getElementById("voice-search-btn");
-    const searchInput = document.getElementById("search-input");
-    const productList = document.getElementById("product-list");
-    const items = document.querySelectorAll(".product-item"); // Get all product items
+document.addEventListener("DOMContentLoaded", function () {
+  const voiceSearchBtn = document.getElementById("voice-search-btn");
+  const searchInput = document.getElementById("search-input");
+  const productList = document.getElementById("product-list");
+  const items = document.querySelectorAll(".product-item"); // Get all product items
 
-    // Check if browser supports webkitSpeechRecognition
-    if ("webkitSpeechRecognition" in window) {
-      const recognition = new webkitSpeechRecognition();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
+  // Check if browser supports webkitSpeechRecognition
+  if ("webkitSpeechRecognition" in window) {
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
 
-      // Start voice recognition on button click
-      voiceSearchBtn.addEventListener("click", () => {
-        recognition.start();
-      });
+    // Start voice recognition on button click
+    voiceSearchBtn.addEventListener("click", () => {
+      recognition.start();
+    });
 
-      // Process result of voice recognition
-      recognition.onresult = event => {
-        const query = event.results[0][0].transcript;
-        searchInput.value = query; // Display the voice input in the search box
-        filterProducts(query); // Filter products based on the input
-      };
+    // Process result of voice recognition
+    recognition.onresult = event => {
+      const query = event.results[0][0].transcript;
+      searchInput.value = query; // Display the voice input in the search box
+      filterProducts(query); // Filter products based on the input
+    };
 
-      // Handle voice recognition errors
-      recognition.onerror = event => {
-        console.error("Voice search error:", event.error);
-        alert("Voice search error: " + event.error);
-      };
-    } else {
-      alert("Voice search is not supported in this browser.");
+    // Handle voice recognition errors
+    recognition.onerror = event => {
+      console.error("Voice search error:", event.error);
+      alert("Voice search error: " + event.error);
+    };
+  } else {
+    alert("Voice search is not supported in this browser.");
+  }
+
+  // Filter products based on search input or voice recognition query
+  function filterProducts(query) {
+    query = normalizeText(query); // Normalize the query
+    const queryKeywords = query.split(" "); // Split query into individual words
+    let resultsFound = false; // Track if there are matching results
+
+    // Filter the product items
+    items.forEach(item => {
+      const name = normalizeText(item.getAttribute("data-name")); // Normalize the product name
+      const isMatch = queryKeywords.every(keyword => fuzzyMatch(name, keyword)); // Check if all keywords match
+
+      if (isMatch) {
+        item.style.display = "block"; // Show matching items
+        resultsFound = true;
+      } else {
+        item.style.display = "none"; // Hide non-matching items
+      }
+    });
+
+    // If no matching results
+    if (!resultsFound) {
+      alert("No items match your search.");
+      resetProductList(); // Reset to original list
+    }
+  }
+
+  // Normalize text to make matching more accurate, remove dashes and extra spaces
+  function normalizeText(text) {
+    return text
+      .toLowerCase() // Convert to lowercase
+      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters, keep dashes
+      .replace(/-/g, " ") // Replace dashes with spaces
+      .trim(); // Remove leading and trailing spaces
+  }
+
+  // Fuzzy matching function to match slight spelling variations
+  function fuzzyMatch(name, keyword) {
+    // Use Levenshtein distance for more advanced fuzzy matching
+    const matchBySound = soundexMatch(name, keyword); // Use Soundex for phonetic matching
+    return name.includes(keyword) || areStringsSimilar(name, keyword) || matchBySound;
+  }
+
+  // Simple implementation of the Soundex algorithm for phonetic matching
+  function soundexMatch(str1, str2) {
+    return soundex(str1) === soundex(str2);
+  }
+
+  // Soundex algorithm (simplified version)
+  function soundex(str) {
+    const soundexMapping = { 'a': 0, 'e': 0, 'i': 0, 'o': 0, 'u': 0, 'y': 0, 'h': 0, 'w': 0, 'b': 1, 'f': 1, 'p': 1, 'v': 1, 'c': 2, 'g': 2, 'k': 2, 's': 2, 'j': 3, 'l': 4, 'm': 5, 'n': 5, 'r': 6, 't': 3, 'd': 3, 'z': 2 };
+    let soundexCode = str[0].toUpperCase();
+
+    for (let i = 1; i < str.length; i++) {
+      const char = str[i].toLowerCase();
+      if (soundexMapping[char] !== undefined && soundexMapping[char] !== soundexMapping[str[i - 1].toLowerCase()]) {
+        soundexCode += soundexMapping[char];
+      }
+    }
+    
+    return soundexCode.padEnd(4, '0').slice(0, 4); // Return a 4-character code
+  }
+
+  // Function to check if two strings are similar (basic fuzzy match using Levenshtein distance)
+  function areStringsSimilar(str1, str2) {
+    const distance = levenshteinDistance(str1, str2); // Calculate Levenshtein distance
+    return distance <= 2; // Allowable distance (2 means minor variations like "Wafello" vs "Wafe")
+  }
+
+  // Levenshtein distance function (calculates the number of single-character edits)
+  function levenshteinDistance(a, b) {
+    const tmp = [];
+    for (let i = 0; i <= b.length; i++) {
+      tmp[i] = [i];
     }
 
-    // Filter products based on search input or voice recognition query
-    function filterProducts(query) {
-      query = query.toLowerCase();
-      let resultsFound = false; // Track if there are matching results
+    for (let i = 0; i <= a.length; i++) {
+      tmp[0][i] = i;
+    }
 
-      // Filter the product items
-      items.forEach(item => {
-        const name = item.getAttribute("data-name").toLowerCase();
-        if (name.includes(query)) {
-          item.style.display = "block"; // Show matching items
-          resultsFound = true;
-        } else {
-          item.style.display = "none"; // Hide non-matching items
-        }
-      });
-
-      // If no matching results
-      if (!resultsFound) {
-        alert("No items match your search.");
-        resetProductList(); // Reset to original list
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        tmp[j][i] = Math.min(tmp[j - 1][i] + 1, tmp[j][i - 1] + 1, tmp[j - 1][i - 1] + cost);
       }
     }
 
-    // Reset product list to show all items
-    function resetProductList() {
-      items.forEach(item => {
-        item.style.display = "block"; // Show all items
-      });
-    }
-  });
+    return tmp[b.length][a.length];
+  }
+
+  // Reset product list to show all items
+  function resetProductList() {
+    items.forEach(item => {
+      item.style.display = "block"; // Show all items
+    });
+  }
+});
+
 </script>
 
 <style>
