@@ -67,18 +67,17 @@
                                         </td>
                                         <td>
                                             @if($order->status != 'paid' && $order->status != 'unpaid')
-                                                <form action="{{ route('cashier.complete', $order->id) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('cashier.complete', $order->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to mark this order as Complete?')">
                                                     @csrf
                                                     <button type="submit" class="btn btn-success btn-sm">Complete</button>
                                                 </form>
-                                                  <form action="{{ route('cashier.cancel', $order->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
-                                            </form>
+                                                <form action="{{ route('cashier.cancel', $order->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to Cancel this order?')">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                                </form>
                                             @else
                                                 <span class="text-muted">No Actions Available</span>
                                             @endif
-                                          
                                         </td>
                                     </tr>
                                 @endforeach

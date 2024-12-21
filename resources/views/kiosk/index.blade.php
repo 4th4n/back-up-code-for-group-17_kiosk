@@ -183,6 +183,13 @@ document.addEventListener("DOMContentLoaded", function () {
     "chocolates": "{{ route('menu.category', 'chocolates') }}"
   };
 
+  // Define a custom mapping for alternate spellings or voice recognition errors
+  const customKeywordMap = {
+    "choco nuts": "choco knots",
+    "choco nots": "choco knots",
+    "choco knots": "choco knots" // Ensure correct keyword remains the same
+  };
+
   // Check if browser supports webkitSpeechRecognition
   if ("webkitSpeechRecognition" in window) {
     const recognition = new webkitSpeechRecognition();
@@ -196,8 +203,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Process result of voice recognition
     recognition.onresult = event => {
-      const query = event.results[0][0].transcript.toLowerCase();
+      let query = event.results[0][0].transcript.toLowerCase();
       searchInput.value = query; // Display the voice input in the search box
+
+      // Check if query matches a custom keyword and correct it
+      if (customKeywordMap[query]) {
+        query = customKeywordMap[query];
+      }
 
       // Check if the query matches any category
       if (categoryRoutes[query]) {

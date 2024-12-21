@@ -1,23 +1,76 @@
-<div class="center-container">
-  <div class="card text-center" style="width: 18rem; border-radius: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-    <div class="card-body">
-      <div class="mb-3">
-        <span style="font-size: 40px; color: #4CAF50;"></span>
-      </div>
-      <h5 class="card-title" style="font-family: 'Comic Sans MS', sans-serif; color: #4CAF50; font-weight: bold;">Order Success</h5>
-      <p class="card-text" style="font-size: 1.2rem; color: #777;">Your Order has been placed</p>
-      <hr>    
-      <p class="card-text" style="font-size: 1.5rem; color: #e74c3c; font-weight: bold;">Your Order Number is <span>{{ $order->order_number }}</span></p>
-      <a href="{{ route('kiosk.index') }}" class="btn btn-success mt-3" style="border-radius: 50px; padding: 10px 20px; font-weight: bold;">Back to Menu</a>
+<div class="container">
+  <div class="card text-center">
+    <h2 class="title">Order Details</h2>
+    <p class="order-number">
+      <strong>Order Number:</strong> 
+      <span style="font-size: 1.5rem; color: #e74c3c; font-weight: bold;">{{ $order->order_number }}</span>
+    </p>
+    <hr>
+    <p class="message">Thank you for your order!</p>
+    <div class="summary text-center">
+      <h3><strong>Date:</strong> {{ \Carbon\Carbon::now()->format('F j, Y, g:i a') }}</h3>
+      <h3><strong>Total Amount:</strong> &#8369;{{ number_format($order->total_price, 2) }}</h3>
     </div>
+    <hr>
+    <p class="note">Keep this for your reference.</p>
+    <a href="{{ route('kiosk.index') }}" class="btn btn-success mt-3" style="border-radius: 10px; padding: 10px 20px; font-weight: bold;">Back to Menu</a>
   </div>
 </div>
-<style>
-  .center-container {
-  display: flex;
-  justify-content: center;  /* Centers horizontally */
-  align-items: center;      /* Centers vertically */
-  height: 100vh;            /* Full height of the viewport */
-}
 
+<style>
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f8f9fa; /* Light background for better contrast */
+    padding: 20px;
+  }
+
+  .card {
+    background: #fff;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    font-family: Arial, sans-serif;
+    text-align: center; /* Ensures all text inside is centered */
+  }
+
+  .title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2ecc71; /* Green color for title */
+    margin-bottom: 10px;
+  }
+
+  .order-number {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .message {
+    font-size: 16px;
+    color: #555;
+  }
+
+  .summary h3 {
+    font-size: 18px;
+    color: #444;
+    margin: 10px 0;
+  }
+
+  .note {
+    font-size: 12px;
+    color: #999;
+    margin-top: 10px;
+  }
+
+  hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #ddd;
+  }
 </style>
