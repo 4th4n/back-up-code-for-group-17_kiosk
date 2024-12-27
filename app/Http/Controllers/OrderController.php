@@ -237,14 +237,12 @@ class OrderController extends Controller
             ];
         });
 
-        return view('admin.reports', [
+        return view('reports', [
             'paidOrdersToday' => $paidOrdersToday,
             'totalPaidAmount' => $totalPaidAmount,
             'orderedItems' => $orderedItems,
         ]);
     }
-    
-    
     
 }
 

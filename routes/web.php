@@ -81,7 +81,7 @@ Route::get('/menu/category/{category}', [ItemController::class, 'showCategory'])
 // In routes/web.php
 Route::patch('/order/{id}/complete', [OrderController::class, 'completeOrder'])->name('order.complete');
 
-Route::get('/admin/reports', [OrderController::class, 'dailyReport'])->name('admin.reports');
+Route::get('/reports', [OrderController::class, 'dailyReport'])->name('reports');
 // Route::get('order/{orderNumber}/receipt', [OrderController::class, 'generateReceipt'])->name('order.receipt');
 use App\Http\Controllers\CashierController;
 

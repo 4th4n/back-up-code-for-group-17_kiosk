@@ -1,4 +1,4 @@
-@extends('admin.dashboard')
+@extends('layouts.app')
 
 @section('content')
 <div class="container my-5">
@@ -93,4 +93,4 @@
         }
     }
 </style>
-@endsection
+@endsection 

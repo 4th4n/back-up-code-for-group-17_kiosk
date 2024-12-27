@@ -187,7 +187,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const customKeywordMap = {
     "choco nuts": "choco knots",
     "choco nots": "choco knots",
-    "choco knots": "choco knots" // Ensure correct keyword remains the same
+    "choco knots": "choco knots", // Ensure correct keyword remains the same
+    "chucky": "chuckie" // Map "Chucky" to "Chuckie"
   };
 
   // Check if browser supports webkitSpeechRecognition
@@ -234,7 +235,23 @@ document.addEventListener("DOMContentLoaded", function () {
     const queryKeywords = query.split(" "); // Split query into individual words
     let resultsFound = false; // Track if there are matching results
 
-    // Filter the product items
+    // Special case: Show only "chuckie" if the query is exactly "chuckie"
+    if (query === "chuckie") {
+      items.forEach(item => {
+        const name = normalizeText(item.getAttribute("data-name"));
+        if (name === "chuckie") {
+          item.style.display = "block"; // Show only "chuckie" items
+          resultsFound = true; // Indicate match
+        } else {
+          item.style.display = "none"; // Hide other items
+        }
+      });
+
+      if (!resultsFound) resetProductList(); // Reset if no "chuckie" found
+      return; // Stop further processing
+    }
+
+    // General filtering logic
     items.forEach(item => {
       const name = normalizeText(item.getAttribute("data-name")); // Normalize the product name
       const isMatch = queryKeywords.every(keyword => fuzzyMatch(name, keyword)); // Check if all keywords match
