@@ -96,3 +96,4 @@ Route::get('/cashier/orders', [OrderController::class, 'fetchOrders'])->name('ca
 Route::get('/cashier/orders', [CashierController::class, 'fetchOrders'])->name('cashier.fetchOrders');
 
 
+Route::get('/cashier/paid-orders', [CashierController::class, 'paidOrders'])->name('cashier.staff');

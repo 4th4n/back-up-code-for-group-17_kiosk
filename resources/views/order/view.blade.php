@@ -1,17 +1,12 @@
 <div class="container">
   <div class="card text-center">
-    <h2 class="title">Order Details</h2>
+    <!-- <h2 class="title">Order Details</h2> -->
     <p class="order-number">
       <strong>Order Number:</strong> 
       <span style="font-size: 1.5rem; color: #e74c3c; font-weight: bold;">{{ $order->order_number }}</span>
     </p>
     <hr>
     <p class="message">Thank you for your order!</p>
-    <div class="summary text-center">
-      <h3><strong>Date:</strong> {{ \Carbon\Carbon::now()->format('F j, Y, g:i a') }}</h3>
-      <h3><strong>Total Amount:</strong> &#8369;{{ number_format($order->total_price, 2) }}</h3>
-    </div>
-    <hr>
     <p class="note">Keep this for your reference.</p>
     <a href="{{ route('kiosk.index') }}" class="btn btn-success mt-3" style="border-radius: 10px; padding: 10px 20px; font-weight: bold;">Back to Menu</a>
   </div>
@@ -74,3 +69,4 @@
     border-top: 1px solid #ddd;
   }
 </style>
+acalsc;a,.c;a.c;ac;a.

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('cashier.dashboard')
 
 @section('content')
 <div class="container">
@@ -35,12 +35,14 @@
                     <div class="text-center">
                         <p class="mb-0" style="font-weight: bold; color: #e74c3c;">Status: <span class="text-success">Paid</span></p>
                         <p class="mt-2">Thank you for your purchase!</p>
+                        <a href="{{ route('cashier.index') }}" class="btn btn-success mt-3" style="border-radius: 10px; padding: 10px 20px; font-weight: bold;">Back to Cahier Dashboard</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <style>
     .card {
     border-radius: 15px;
