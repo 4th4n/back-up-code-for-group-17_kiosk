@@ -85,6 +85,10 @@
                                                     <span class="badge bg-danger text-white rounded-pill">
                                                         <i class="bi bi-x-circle-fill me-1"></i>Unpaid
                                                     </span>
+                                                @elseif($order->status == 'cancelled')
+                                                    <span class="badge bg-secondary text-white rounded-pill">
+                                                        <i class="bi bi-slash-circle-fill me-1"></i>Cancelled
+                                                    </span>
                                                 @else
                                                     <span class="badge bg-warning text-dark rounded-pill">
                                                         <i class="bi bi-clock-fill me-1"></i>Pending
@@ -92,7 +96,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($order->status != 'paid' && $order->status != 'unpaid')
+                                                @if($order->status == 'pending')
                                                     <div class="btn-group" role="group">
                                                         <form action="{{ route('cashier.complete', $order->id) }}" method="POST" class="d-inline">
                                                             @csrf
@@ -124,12 +128,12 @@
         </div>
     </div>
 </div>
-<div class="d-flex justify-content-center">
-                <a href="{{ route('cashier.staff') }}" class="btn btn-outline-primary"> Go to staff
-                    <i class="bi bi-arrow-right me-1"></i>
-                </a>
-            </div>
 
+<div class="d-flex justify-content-center">
+    <a href="{{ route('cashier.staff') }}" class="btn btn-outline-primary"> Go to staff
+        <i class="bi bi-arrow-right me-1"></i>
+    </a>
+</div>
 
 {{-- Bootstrap Icons CSS --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -198,4 +202,4 @@
         background-color: #ff9f1c !important;
     }
 </style>
-@endsection
+@endsection  

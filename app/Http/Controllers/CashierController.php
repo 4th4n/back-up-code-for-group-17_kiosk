@@ -11,7 +11,7 @@ class CashierController extends Controller
     // Display Cashier Dashboard
     public function index()
     {
-        $orders = Order::whereIn('status', ['pending', 'paid', 'unpaid'])->get(); // Get all orders with these statuses
+        $orders = Order::whereIn('status', ['pending'])->get(); // Get all orders with these statuses
         $totalAmount = $orders->sum('total_amount'); // Calculate the total amount
 
         return view('cashier.index', compact('orders', 'totalAmount'));
@@ -36,22 +36,49 @@ class CashierController extends Controller
     
 
     // Cancel the order (unpaid)
+    // public function cancel($id)
+    // {
+    //     $order = Order::findOrFail($id);
+    //     $order->status = 'unpaid'; // Update status to 'unpaid'
+    //     $order->save();
+
+    //     return redirect()->route('cashier.index')->with('success', 'Order cancelled and marked as unpaid.');
+    // }
     public function cancel($id)
     {
         $order = Order::findOrFail($id);
-        $order->status = 'unpaid'; // Update status to 'unpaid'
+    
+        // Siguraduhin na PENDING lang ang maaaring i-cancel
+        if ($order->status !== 'pending') {
+            return redirect()->route('cashier.index')->with('info', 'Only pending orders can be canceled.');
+        }
+    
+        // Balik sa stock ang mga items ng order
+        foreach ($order->items as $item) {
+            if ($item->pivot) {
+                $item->quantity += $item->pivot->quantity; // Ibalik ang quantity sa stock
+                $item->save();
+            }
+        }
+    
+        // Baguhin ang status ng order sa 'cancelled'
+        $order->status = 'cancelled';
         $order->save();
-
-        return redirect()->route('cashier.index')->with('success', 'Order cancelled and marked as unpaid.');
+    
+        return redirect()->route('cashier.index')->with('success', 'Order cancelled, and items have been restocked.');
     }
+    
+    
     public function paidOrders()
-    {
-        // Get all orders with status 'paid' and load their associated items
-        $orders = Order::where('status', 'paid')->with('items')->get();
+{
+    // Kunin ang lahat ng paid orders na ginawa lang ngayong araw
+    $orders = Order::where('status', 'paid')
+                    ->whereDate('created_at', today()) // Kinukuha lang yung mga binayaran ngayong araw
+                    ->with('items')
+                    ->get();
 
-        // Return the view and pass the orders
-        return view('cashier.staff', compact('orders'));
-    }
+    return view('cashier.staff', compact('orders'));
+}
 
 // app/Http/Controllers/CashierController.php
 // app/Http/Controllers/CashierController.php

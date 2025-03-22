@@ -73,6 +73,7 @@ public function index()
 {
     // Kunin ang lahat ng mga item mula sa database
     $items = Item::all();
+    $items = Item::paginate(10); 
 
     // I-render ang view kasama ang mga item
     return view('items.index', compact('items'));

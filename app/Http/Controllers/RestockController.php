@@ -11,9 +11,18 @@ class RestockController extends Controller
     // Display the restock page
     public function index()
     {
-        $items = Item::all(); // Fetch all items for display
-        return view('admin.restock', compact('items'));
+        // Kunin ang lahat ng items para ma-display
+        $items = Item::all(); 
+    
+        // Bilangin ang mga item na may mababang stock (halimbawa: less than 10)
+        $lowStockCount = Item::where('quantity', '>', 0)->where('quantity', '<', 10)->count();
+    
+        // Bilangin ang mga item na out of stock (0 quantity)
+        $outOfStockCount = Item::where('quantity', '=', 0)->count();
+    
+        return view('admin.restock', compact('items', 'lowStockCount', 'outOfStockCount'));
     }
+    
 
     // Handle the restocking of items
     public function store(Request $request)

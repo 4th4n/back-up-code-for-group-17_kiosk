@@ -97,3 +97,12 @@ Route::get('/cashier/orders', [CashierController::class, 'fetchOrders'])->name('
 
 
 Route::get('/cashier/paid-orders', [CashierController::class, 'paidOrders'])->name('cashier.staff');
+Route::post('/cashier/cancel/{order}', [CashierController::class, 'cancel'])->name('cashier.cancel');
+// Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+Route::get('/admin/restocks', [RestockController::class, 'index'])->name('admin.restocks');
+
+use App\Http\Controllers\AdminController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+});
