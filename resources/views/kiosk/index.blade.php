@@ -128,9 +128,9 @@
                         <form class="d-flex" action="{{ route('menu.search') }}" method="GET">
                             <div class="input-group">
                                 <input id="search-input" class="form-control rounded-start" type="search" name="query" placeholder="Search for food items..." aria-label="Search">
-                                <button type="submit" class="btn btn-primary">
+                                <!-- <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-search"></i>
-                                </button>
+                                </button> -->
                                 <button id="voice-search-btn" type="button" class="btn btn-outline-secondary rounded-end">
                                     <i class="bi bi-mic"></i>
                                 </button>

@@ -106,3 +106,7 @@ use App\Http\Controllers\AdminController;
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 });
+
+// use App\Http\Controllers\DashboardController;
+
+// Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');

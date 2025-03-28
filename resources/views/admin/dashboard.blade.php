@@ -6,6 +6,8 @@
     <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
 </head>
 <body class="bg-light">
     <!-- Navbar -->
@@ -36,12 +38,12 @@
         <ul class="nav flex-column">
             <!-- Admin Dashboard Link -->
             <li class="nav-item mb-2">
-                <a class="nav-link menu-link" href="{{ route('admin.dashboard') }}">
+                <a class="nav-link menu-link active" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-house-door me-2"></i> Admin Dashboard
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link menu-link active" href="{{ route('items.index') }}">
+                <a class="nav-link menu-link " href="{{ route('items.index') }}">
                     <i class="bi bi-box me-2"></i> Update Inventory
                 </a>
             </li>
@@ -69,16 +71,55 @@
 
     <!-- Main Content -->
     <main class="container my-4">
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        @yield('content')
+    <div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                @yield('content')
+
+                <!-- Dashboard Statistics -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-title">Total Orders Today</div>
+                            <div class="stat-value">{{ $totalOrdersToday ?? 0 }}</div>
+                            <i class="bi bi-cart-check stat-icon"></i>
+                        </div>
                     </div>
+
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-title">Total Sales Today</div>
+                            <div class="stat-value">₱{{ number_format($totalSalesToday ?? 0, 2) }}</div>
+                            <i class="bi bi-currency-dollar stat-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+    <div class="stat-card">
+        <div class="stat-title">Total Items in Stock</div>
+        <div class="stat-value">{{ $totalItemsInStock ?? 0 }}</div>
+        <i class="bi bi-boxes stat-icon"></i>
+    </div>
+</div>
+
+
+        <div class="col-md-3">
+            <div class="stat-card bg-warning">
+                <div class="stat-title">Low Stock Alerts</div>
+                <div class="stat-value">
+                    {{ isset($lowStockAlerts) ? $lowStockAlerts->count() : 0 }} Items
                 </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
             </div>
         </div>
-    </main>
+    </div>
+       
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
