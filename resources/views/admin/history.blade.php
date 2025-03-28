@@ -8,9 +8,6 @@
                 <h3 class="fw-bold mb-0">
                     <i class="fas fa-history me-2"></i>Order History
                 </h3>
-                <button onclick="window.print()" class="btn btn-light btn-sm">
-                    <i class="fas fa-print me-1"></i> Print Report
-                </button>
             </div>
         </div>
         
@@ -262,57 +259,7 @@
         background-color: rgba(78, 115, 223, 0.05);
     }
     
-    /* Print Styles */
-    @media print {
-        .btn, #filterBtn, .input-group, button, .btn-group {
-            display: none !important;
-        }
-        
-        .card {
-            box-shadow: none !important;
-            border: none !important;
-        }
-        
-        .card-header {
-            background-color: white !important;
-            color: black !important;
-            border-bottom: 1px solid #ddd !important;
-        }
-        
-        .bg-gradient-primary, .bg-gradient-success, .bg-gradient-info, .bg-gradient-warning {
-            background: white !important;
-            color: black !important;
-        }
-        
-        .text-white {
-            color: black !important;
-        }
-        
-        body {
-            font-size: 12pt;
-        }
-        
-        .collapse {
-            display: block !important;
-        }
-        
-        .table {
-            border-collapse: collapse !important;
-        }
-        
-        .table td, .table th {
-            background-color: white !important;
-        }
-        
-        .icon-box {
-            border: 1px solid #ddd !important;
-            background: white !important;
-        }
-        
-        .icon-box i {
-            color: black !important;
-        }
-    }
+    
 </style>
 
 @push('scripts')

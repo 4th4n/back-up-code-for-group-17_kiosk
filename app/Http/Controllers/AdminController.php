@@ -76,7 +76,7 @@ class AdminController extends Controller
             'totalOrdersToday',
             'totalSalesToday',
             'totalItemsInStock',
-            'lowStockAlerts',+
+            'lowStockAlerts',
             'recentOrders'
         ));
     }
