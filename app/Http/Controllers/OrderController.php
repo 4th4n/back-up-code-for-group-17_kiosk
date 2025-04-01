@@ -170,26 +170,49 @@ class OrderController extends Controller
         return redirect()->back()->with('success', 'Order status updated successfully.');
     }
     
-    public function orderHistory()
-    {
-        // Kunin ang lahat ng orders, paid at unpaid
-        $orders = Order::with('items')
-            ->orderBy('created_at', 'desc')
-            ->get();
+    // public function orderHistory()
+    // {
+    //     // Kunin ang lahat ng orders, paid at unpaid
+    //     $orders = Order::with('items')
+    //         ->orderBy('created_at', 'desc')
+    //         ->get();
 
-        // Kunin ang lahat ng paid orders para ngayong araw lamang
-        $paidOrdersToday = Order::where('status', 'paid')
-            ->whereDate('created_at', Carbon::today())
-            ->get();
+    //     // Kunin ang lahat ng paid orders para ngayong araw lamang
+    //     $paidOrdersToday = Order::where('status', 'paid')
+    //         ->whereDate('created_at', Carbon::today())
+    //         ->get();
 
-        // Kalkulahin ang kabuuang halaga ng paid orders ngayong araw
-        $totalPaidAmount = $paidOrdersToday->sum('total_price');
+    //     // Kalkulahin ang kabuuang halaga ng paid orders ngayong araw
+    //     $totalPaidAmount = $paidOrdersToday->sum('total_price');
 
-        // Ibalik ang lahat ng orders at ang kabuuang halaga ng paid orders sa view
-        return view('admin.history', compact('orders', 'totalPaidAmount'));
-    }
-
+    //     // Ibalik ang lahat ng orders at ang kabuuang halaga ng paid orders sa view
+    //     return view('admin.history', compact('orders', 'totalPaidAmount'));
+    // }
+    public function orderHistory(Request $request)
+{
+    // Kunin ang petsa mula sa request, default sa ngayong araw
+    $date = $request->input('date', date('Y-m-d'));
     
+    // I-parse ang petsa
+    $filterDate = Carbon::parse($date);
+    
+    // Kunin ang lahat ng orders, paid at unpaid
+    $orders = Order::with('items')
+        ->whereDate('created_at', $filterDate)
+        ->orderBy('created_at', 'desc')
+        ->get();
+    
+    // Kunin ang lahat ng paid orders para sa napiling araw
+    $paidOrders = Order::where('status', 'paid')
+        ->whereDate('created_at', $filterDate)
+        ->get();
+    
+    // Kalkulahin ang kabuuang halaga ng paid orders sa napiling araw
+    $totalPaidAmount = $paidOrders->sum('total_price');
+    
+    // Ibalik ang lahat ng orders, kabuuang halaga ng paid orders, at ang napiling petsa sa view
+    return view('admin.history', compact('orders', 'totalPaidAmount', 'date'));
+}
     public function removeFromOrder(Request $request)
 {
     // Validate the request to ensure the item_id is provided and exists

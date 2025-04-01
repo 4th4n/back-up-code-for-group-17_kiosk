@@ -8,6 +8,9 @@
                 <h3 class="fw-bold mb-0">
                     <i class="fas fa-history me-2"></i>Order History
                 </h3>
+                <button onclick="window.print()" class="btn btn-light btn-sm">
+                    <i class="fas fa-print me-1"></i> Print Report
+                </button>
             </div>
         </div>
         
@@ -24,7 +27,7 @@
                                 <span class="input-group-text bg-white border-end-0">
                                     <i class="fas fa-search text-primary"></i>
                                 </span>
-                                <input type="date" class="form-control border-start-0 ps-0" id="dateFilter" value="{{ date('Y-m-d') }}">
+                                <input type="date" class="form-control border-start-0 ps-0" id="dateFilter" value="{{ $date ?? date('Y-m-d') }}">
                                 <button class="btn btn-primary px-4" type="button" id="filterBtn">
                                     <i class="fas fa-filter me-2"></i>Filter
                                 </button>
@@ -36,7 +39,13 @@
                     <div class="card border-0 bg-gradient-success text-white shadow-sm h-100">
                         <div class="card-body d-flex align-items-center justify-content-center">
                             <div class="text-center">
-                                <h5 class="mb-2 opacity-75">Today's Revenue</h5>
+                                <h5 class="mb-2 opacity-75">
+                                    @if(isset($date) && $date != date('Y-m-d'))
+                                        Revenue for {{ \Carbon\Carbon::parse($date)->format('F j, Y') }}
+                                    @else
+                                        Today's Revenue
+                                    @endif
+                                </h5>
                                 <div class="d-flex align-items-center justify-content-center">
                                     <i class="fas fa-coins fs-1 me-3 opacity-75"></i>
                                     <span class="display-5 fw-bold">₱{{ number_format($totalPaidAmount, 2) }}</span>
@@ -53,21 +62,13 @@
                     <h5 class="mb-0 text-primary">
                         <i class="fas fa-shopping-bag me-2"></i>Orders List
                     </h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-file-excel me-1"></i> Export
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" id="refreshBtn">
-                            <i class="fas fa-sync-alt me-1"></i> Refresh
-                        </button>
-                    </div>
                 </div>
                 <div class="card-body p-0">
                     {{-- Orders Table --}}
                     @if($orders->isEmpty())
                         <div class="alert alert-info m-4 text-center py-5" role="alert">
                             <i class="fas fa-info-circle me-2 fs-3 d-block mb-3 opacity-75"></i>
-                            <span class="fs-5">No paid orders found for today.</span>
+                            <span class="fs-5">No paid orders found for {{ isset($date) ? \Carbon\Carbon::parse($date)->format('F j, Y') : 'today' }}.</span>
                             <p class="mt-2 mb-0 text-muted">Try selecting a different date or check back later.</p>
                         </div>
                     @else
@@ -259,29 +260,82 @@
         background-color: rgba(78, 115, 223, 0.05);
     }
     
-    
+    /* Print Styles */
+    @media print {
+        .btn, #filterBtn, .input-group, button, .btn-group {
+            display: none !important;
+        }
+        
+        .card {
+            box-shadow: none !important;
+            border: none !important;
+        }
+        
+        .card-header {
+            background-color: white !important;
+            color: black !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        
+        .bg-gradient-primary, .bg-gradient-success, .bg-gradient-info, .bg-gradient-warning {
+            background: white !important;
+            color: black !important;
+        }
+        
+        .text-white {
+            color: black !important;
+        }
+        
+        body {
+            font-size: 12pt;
+        }
+        
+        .collapse {
+            display: block !important;
+        }
+        
+        .table {
+            border-collapse: collapse !important;
+        }
+        
+        .table td, .table th {
+            background-color: white !important;
+        }
+        
+        .icon-box {
+            border: 1px solid #ddd !important;
+            background: white !important;
+        }
+        
+        .icon-box i {
+            color: black !important;
+        }
+    }
 </style>
 
-@push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        });
-        
-        // Date filter functionality
-        document.getElementById('filterBtn').addEventListener('click', function() {
-            const selectedDate = document.getElementById('dateFilter').value;
-            window.location.href = `?date=${selectedDate}`;
-        });
-        
-        // Refresh button functionality
-        document.getElementById('refreshBtn').addEventListener('click', function() {
-            window.location.reload();
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle the filter button click
+    document.getElementById('filterBtn').addEventListener('click', function() {
+        const selectedDate = document.getElementById('dateFilter').value;
+        if (selectedDate) {
+            // Redirect to the same page with date parameter
+            window.location.href = window.location.pathname + '?date=' + selectedDate;
+        }
     });
+
+    // Set the date filter value from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateParam = urlParams.get('date');
+    if (dateParam) {
+        document.getElementById('dateFilter').value = dateParam;
+    }
+
+    // Initialize print functionality
+    document.querySelector('button[onclick="window.print()"]').addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default handler
+        window.print(); // Trigger print
+    });
+});
 </script>
-@endpush
 @endsection

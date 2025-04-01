@@ -136,11 +136,11 @@
                         <i class="bi bi-clock-history"></i> Order History
                     </a>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link" href="{{ route('reports') }}">
                         <i class="bi bi-file-text"></i> Reports
                     </a>
-                </li>
+                </li> -->
                 <li class="nav-item mt-3">
                     <a class="nav-link text-danger" href="{{ route('logout') }}" 
                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
