@@ -20,8 +20,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Product Name</th>
-                                    <th>Total Units</th>
-                                    <th>Unit Type</th>
+                                    <th>Unit</th>
                                     <th>Quantity</th>
                                     <th>Price</th>
                                     <th class="text-end">Actions</th>
@@ -31,8 +30,7 @@
                                 @forelse ($items as $item)
                                     <tr>
                                         <td>{{ $item->name }}</td>
-                                        <td>{{ $item->stock }}</td>
-                                        <td>{{ $item->unit }}</td>
+                                        <td>{{ $item->stock }} {{ $item->unit }}</td>
                                         <td>{{ $item->quantity }}</td>
                                         <td>₱{{ number_format($item->price, 2) }}</td>
                                         <td class="text-end">
@@ -50,7 +48,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center py-5">
+                                        <td colspan="5" class="text-center py-5">
                                             <h5 class="mt-3">No products found</h5>
                                             <p class="text-muted">Add your first product to get started</p>
                                         </td>

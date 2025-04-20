@@ -9,7 +9,7 @@
                     <i class="fas fa-history me-2"></i>Order History
                 </h3>
                 <button onclick="window.print()" class="btn btn-light btn-sm">
-                    <i class="fas fa-print me-1"></i> Print Report
+                    <i class="fas fa-print me-1"></i> Save Report
                 </button>
             </div>
         </div>

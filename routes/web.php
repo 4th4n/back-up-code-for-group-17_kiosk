@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ItemController;
-// routes/web.php
+use Illuminate\Support\Facades\Log; 
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RestockController;
@@ -49,9 +49,10 @@ Route::post('/add-to-order', [OrderController::class, 'addToOrder'])->name('orde
 Route::post('/remove-from-order', [OrderController::class, 'removeFromOrder'])->name('order.remove');
 Route::get('/checkout', [OrderController::class, 'checkout'])->name('order.checkout');
 Route::get('/orders/view', [OrderController::class, 'viewOrders'])->name('orders.view');
-Route::get('/checkout', [OrderController::class, 'checkout'])->name('order.checkout');
 Route::get('/admin/orders', [OrderController::class, 'viewOrders'])->name('admin.orders');
 Route::get('/order/{orderNumber}', [OrderController::class, 'viewOrder'])->name('order.view');
+
+Route::get('/order/cart', [OrderController::class, 'getCartData'])->name('order.cart');
 
 
 Route::post('/remove-from-order', [OrderController::class, 'removeFromOrder'])->name('order.remove');
@@ -106,3 +107,4 @@ use App\Http\Controllers\AdminController;
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 });
+Route::get('/cart/view', [OrderController::class, 'viewCart'])->name('cart.view');

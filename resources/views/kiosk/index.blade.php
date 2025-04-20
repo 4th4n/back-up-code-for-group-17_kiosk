@@ -79,35 +79,34 @@
             <div class="card shadow border-0 rounded-3 hover-lift">
                 <div class="card-header bg-gradient-light py-3 d-flex justify-content-between align-items-center">
                     <h3 class="fs-4 mb-0 fw-bold"><i class="bi bi-cart3 me-2 text-primary"></i>Your Cart</h3>
-                    <span class="badge bg-primary rounded-pill">{{ session('order') ? count(session('order')) : 0 }}</span>
+                    <!-- Cart Badge that will show the number of items -->
+                    <!-- <span id="cart-count-badge" class="badge bg-primary rounded-pill">{{ session('order') ? count(session('order')) : 0 }}</span> -->
                 </div>
                 <div class="card-body">
-                    @if(session('order'))
+                    <div id="cart-content" class="{{ session('order') ? '' : 'd-none' }}">
                         <div class="text-center mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">Items:</span>
-                                <span class="fw-bold">{{ count(session('order')) }}</span>
+                                <span id="item-count" class="fw-bold">{{ count(session('order') ?? []) }}</span>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted">Total:</span>
-                                <span class="fw-bold fs-5 text-primary">₱{{ number_format($totalAmount ?? 0, 2) }}</span>
+                                <span id="cart-total" class="fw-bold fs-5 text-primary">₱{{ number_format($totalAmount ?? 0, 2) }}</span>
                             </div>
                         </div>
                         <button type="button" class="btn btn-primary w-100 mb-2 py-2" data-bs-toggle="modal" data-bs-target="#orderModal">
                             <i class="bi bi-cart3 me-2"></i>View Cart
-                        </button>
+                        </button> 
+
                         <a href="{{ route('order.checkout') }}" class="btn btn-success w-100 py-2">
                             <i class="bi bi-credit-card me-2"></i>Checkout
                         </a>
-                    @else
-                        <div class="text-center py-4">
-                            <i class="bi bi-cart-x fs-1 text-muted mb-3"></i>
-                            <p class="text-muted mb-3">Your cart is empty</p>
-                            <button type="button" class="btn btn-outline-primary rounded-pill px-4" disabled>
-                                <i class="bi bi-cart3 me-2"></i>Add Items
-                            </button>
-                        </div>
-                    @endif
+                    </div>
+
+                    <div id="cart-empty" class="text-center py-4 {{ session('order') ? 'd-none' : '' }}">
+                        <i class="bi bi-cart-x fs-1 text-muted mb-3"></i>
+                        <p class="text-muted mb-3">Your cart is empty</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -161,14 +160,15 @@
                                                 @endif
                                                 
                                                 @if($item->quantity > 0)
-                                                    <form action="{{ route('order.add') }}" method="POST" class="position-absolute bottom-0 end-0 m-2">
-                                                        @csrf
-                                                        <input type="hidden" name="item_id" value="{{ $item->id }}">
-                                                        <button type="submit" class="btn btn-primary btn-sm rounded-circle p-2" title="Add to cart">
-                                                            <i class="bi bi-plus-lg"></i>
-                                                        </button>
-                                                    </form>
+                                                    <button 
+                                                        type="button"
+                                                        class="btn btn-primary btn-sm rounded-circle p-2 add-to-cart-btn position-absolute bottom-0 end-0 m-2"
+                                                        data-id="{{ $item->id }}"
+                                                        title="Add to cart">
+                                                        <i class="bi bi-plus-lg"></i>
+                                                    </button>
                                                 @endif
+
                                             </div>
                                         </div>
                                         
@@ -217,110 +217,41 @@
 
 <!-- Order Modal -->
 <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-gradient-light">
-                <h5 class="modal-title fw-bold" id="orderModalLabel">
-                    <i class="bi bi-cart3 me-2 text-primary"></i>Your Order
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                @if(session('order'))
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Item</th>
-                                    <th class="text-center">Quantity</th>
-                                    <th class="text-end">Price</th>
-                                    <th class="text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach(session('order') as $id => $details)
-                                <tr>
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center">
-                                            <div class="me-3">
-                                                <img <img src="{{ asset('images/default.png') }}" class="rounded" width="50" height="50" alt="{{ $details['name'] }}">
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0 fw-bold">{{ $details['name'] }}</h6>
-                                                <small class="text-muted">₱{{ number_format($details['price'], 2) }} each</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="d-flex align-items-center justify-content-center">
-                                            <form action="{{ route('order.update') }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <input type="hidden" name="item_id" value="{{ $id }}">
-                                                <input type="hidden" name="quantity" value="{{ $details['quantity'] - 1 }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle p-1" {{ $details['quantity'] <= 1 ? 'disabled' : '' }}>
-                                                    <i class="bi bi-dash"></i>
-                                                </button>
-                                            </form>
-                                            <span class="mx-3 fw-bold">{{ $details['quantity'] }}</span>
-                                            <form action="{{ route('order.update') }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <input type="hidden" name="item_id" value="{{ $id }}">
-                                                <input type="hidden" name="quantity" value="{{ $details['quantity'] + 1 }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle p-1">
-                                                    <i class="bi bi-plus"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                    <td class="text-end align-middle fw-bold">
-                                        ₱{{ number_format($details['price'] * $details['quantity'], 2) }}
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <form action="{{ route('order.remove') }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="item_id" value="{{ $id }}">
-                                            <button type="button" class="btn btn-sm btn-danger rounded-circle p-1" onclick="confirmDelete(event, this.form)" title="Remove item">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot class="table-light">
-                                <tr>
-                                    <td colspan="2" class="text-end fw-bold">Total:</td>
-                                    <td class="text-end fw-bold fs-5 text-primary">₱{{ number_format($totalAmount ?? 0, 2) }}</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-arrow-left me-2"></i>Continue Shopping
-                        </button>
-                        <a href="{{ route('order.checkout') }}" class="btn btn-success">
-                            <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
-                        </a>
-                    </div>
-                @else
-                    <div class="text-center py-5">
-                        <i class="bi bi-cart-x fs-1 text-muted mb-3"></i>
-                        <h4>Your cart is empty</h4>
-                        <p class="text-muted mb-4">Add some delicious items to your cart first!</p>
-                        <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">
-                            <i class="bi bi-bag-plus me-2"></i>Start Shopping
-                        </button>
-                    </div>
-                @endif
-            </div>
-        </div>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content rounded-3">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="orderModalLabel"><i class="bi bi-cart3 me-2"></i>Your Order</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+       @include('partials.cart-modal')
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Add this at the end of your file -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const viewCartBtn = document.querySelector('[data-bs-target="#orderModal"]');
+
+    if (viewCartBtn) {
+        viewCartBtn.addEventListener('click', function () {
+            fetch("{{ route('cart.view') }}")
+                .then(response => response.text())
+                .then(html => {
+                    const modalBody = document.querySelector('#orderModal .modal-body');
+                    modalBody.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('❌ Error loading cart modal:', error);
+                });
+        });
+    }
+});
+</script>
+
 <style>
+    
     .hover-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
@@ -367,8 +298,21 @@
         backdrop-filter: blur(2px);
     }
 </style>
+<script>
+  document.querySelectorAll('form[action="{{ route('order.add') }}"]').forEach(function(form) {
+    form.addEventListener('submit', function () {
+      setTimeout(() => {
+        window.location.reload(); // reloads page after form submit
+      }, 500);
+    });
+  });
+</script>
+
 
 <script>
+
+    // After successful item addition or quantity update
+
     // Confirm delete function
     function confirmDelete(event, form) {
         event.preventDefault();
@@ -405,6 +349,120 @@
             voiceSearchBtn.style.display = 'none';
         }
     });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const updateButtons = document.querySelectorAll('.update-qty-btn');
+
+    updateButtons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const itemId = this.dataset.id;
+            const action = this.dataset.action;
+
+            console.log(`Item ID: ${itemId} | Action: ${action}`);
+
+            fetch("{{ route('order.update') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    action: action
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('Response Data:', data);
+
+                if (data.success) {
+                    console.log(`Updated Quantity for item ${itemId}: ${data.quantity}`);
+                    console.log(`Updated Price for item ${itemId}: ₱${parseFloat(data.item_total).toFixed(2)}`);
+                    console.log(`Updated Total: ₱${parseFloat(data.total).toFixed(2)}`);
+
+                    const quantitySpan = document.querySelector(`#qty-${itemId}`);
+                    if (quantitySpan) {
+                        quantitySpan.textContent = data.quantity;
+                    }
+
+                    const priceSpan = document.querySelector(`#price-${itemId}`);
+                    if (priceSpan) {
+                        priceSpan.textContent = `₱${parseFloat(data.item_total).toFixed(2)}`;
+                    }
+
+                    const totalSpan = document.querySelector(`#total-price`);
+                    if (totalSpan) {
+                        totalSpan.textContent = `₱${parseFloat(data.total).toFixed(2)}`;
+                    }
+                } else {
+                    console.log('Error: Could not update item.');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+            });
+        });
+    });
+});
+
+// ADD ORDER
+document.addEventListener('DOMContentLoaded', function () {
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const itemId = this.dataset.id;
+
+            fetch('{{ route('order.add') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                body: JSON.stringify({
+                    item_id: itemId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const cartCount = document.querySelector('#cart-count');
+                    if (cartCount) {
+                        cartCount.textContent = data.cart_count ?? 0;
+                    }
+
+                    const itemCount = document.querySelector('#item-count');
+                    if (itemCount) {
+                        itemCount.textContent = data.cart_count ?? 0;
+                    }
+
+                    const cartTotal = document.querySelector('#cart-total');
+                    if (cartTotal) {
+                        cartTotal.textContent = `₱${parseFloat(data.total).toFixed(2)}`;
+                    }
+
+                    const cartContent = document.querySelector('#cart-content');
+                    const cartEmpty = document.querySelector('#cart-empty');
+                    if (data.cart_count > 0) {
+                        cartContent?.classList.remove('d-none');
+                        cartEmpty?.classList.add('d-none');
+                    } else {
+                        cartContent?.classList.add('d-none');
+                        cartEmpty?.classList.remove('d-none');
+                    }
+
+                    console.log(`✅ ${data.message}`);
+                } else {
+                    console.warn(`⚠️ ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error adding to cart:', error);
+            });
+        });
+    });
+});
+
 </script>
 <script>
 // Voice search script
@@ -757,4 +815,4 @@ function confirmDelete(event, form) {
     }
 }
 </script>
-@endsection
+@endsection 
