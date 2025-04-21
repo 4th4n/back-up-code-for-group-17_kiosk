@@ -349,60 +349,52 @@ document.addEventListener('DOMContentLoaded', function () {
             voiceSearchBtn.style.display = 'none';
         }
     });
+ 
+    document.addEventListener('click', function (event) {
+    if (event.target.closest('.update-qty-btn')) {
+        const button = event.target.closest('.update-qty-btn');
+        const itemId = button.dataset.id;
+        const action = button.dataset.action;
 
-    document.addEventListener('DOMContentLoaded', function () {
-    const updateButtons = document.querySelectorAll('.update-qty-btn');
-
-    updateButtons.forEach(btn => {
-        btn.addEventListener('click', function () {
-            const itemId = this.dataset.id;
-            const action = this.dataset.action;
-
-            console.log(`Item ID: ${itemId} | Action: ${action}`);
-
-            fetch("{{ route('order.update') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    item_id: itemId,
-                    action: action
-                })
+        fetch("{{ route('order.update') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                action: action
             })
-            .then(res => res.json())
-            .then(data => {
-                console.log('Response Data:', data);
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update quantity in modal
+                const qtyElement = document.querySelector(`#qty-${itemId}`);
+                if (qtyElement) qtyElement.textContent = data.quantity;
 
-                if (data.success) {
-                    console.log(`Updated Quantity for item ${itemId}: ${data.quantity}`);
-                    console.log(`Updated Price for item ${itemId}: ₱${parseFloat(data.item_total).toFixed(2)}`);
-                    console.log(`Updated Total: ₱${parseFloat(data.total).toFixed(2)}`);
+                // Update item total price in modal
+                const priceElement = document.querySelector(`#price-${itemId}`);
+                if (priceElement) priceElement.textContent = `₱${data.item_total.toFixed(2)}`;
 
-                    const quantitySpan = document.querySelector(`#qty-${itemId}`);
-                    if (quantitySpan) {
-                        quantitySpan.textContent = data.quantity;
-                    }
+                // Update modal total
+                const modalTotal = document.querySelector(`#total-price`);
+                if (modalTotal) modalTotal.textContent = `₱${data.total.toFixed(2)}`;
 
-                    const priceSpan = document.querySelector(`#price-${itemId}`);
-                    if (priceSpan) {
-                        priceSpan.textContent = `₱${parseFloat(data.item_total).toFixed(2)}`;
-                    }
+                // 🔥 Update the cart summary total too!
+                const cartTotal = document.querySelector(`#cart-total`);
+                if (cartTotal) cartTotal.textContent = `₱${data.total.toFixed(2)}`;
 
-                    const totalSpan = document.querySelector(`#total-price`);
-                    if (totalSpan) {
-                        totalSpan.textContent = `₱${parseFloat(data.total).toFixed(2)}`;
-                    }
-                } else {
-                    console.log('Error: Could not update item.');
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-            });
+                console.log("✅ Both modal and sidebar total updated.");
+            } else {
+                console.warn("⚠️ Failed to update item:", data.message);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Request failed:', error);
         });
-    });
+    }
 });
 
 // ADD ORDER
@@ -487,7 +479,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const customKeywordMap = {
         "choco nuts": "choco knots",
         "choco nots": "choco knots",
-        "choco knots": "choco knots"
+        "choco knots": "choco knots",
+        "wafelo": "wafello",
+        "wafelow": "wafello",
+        "waffelo": "wafello",
+        "waffle o": "wafello"
     };
     
     // Check if browser supports speech recognition

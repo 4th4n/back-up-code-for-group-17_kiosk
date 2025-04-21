@@ -85,14 +85,14 @@
             </a>
         </div>
     @else
-        <div class="text-center py-5">
+        <!-- <div class="text-center py-5">
             <i class="bi bi-cart-x fs-1 text-muted mb-3"></i>
             <h4>Your cart is empty</h4>
             <p class="text-muted mb-4">Add some delicious items to your cart first!</p>
             <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">
                 <i class="bi bi-bag-plus me-2"></i>Start Shopping
             </button>
-        </div>
+        </div> -->
     @endif
 </div>
 

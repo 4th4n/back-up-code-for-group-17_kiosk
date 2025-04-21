@@ -81,7 +81,7 @@
                                         <th class="py-3 text-uppercase text-muted fs-6"><i class="fas fa-dollar-sign me-1"></i> Total</th>
                                         <th class="py-3 text-uppercase text-muted fs-6"><i class="fas fa-box me-1"></i> Items</th>
                                         <th class="py-3 text-uppercase text-muted fs-6"><i class="fas fa-clock me-1"></i> Date & Time</th>
-                                        <th class="py-3 text-uppercase text-muted fs-6 text-center"><i class="fas fa-cog me-1"></i> Actions</th>
+                                        <!-- <th class="py-3 text-uppercase text-muted fs-6 text-center"><i class="fas fa-cog me-1"></i> Actions</th> -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -142,7 +142,7 @@
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td class="align-middle text-center">
+                                            <!-- <td class="align-middle text-center">
                                                 <div class="btn-group">
                                                     <a href="#" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="View Details">
                                                         <i class="fas fa-eye"></i>
@@ -154,7 +154,7 @@
                                                         <i class="fas fa-download"></i>
                                                     </a>
                                                 </div>
-                                            </td>
+                                            </td> -->
                                         </tr>
                                     @endforeach
                                 </tbody>

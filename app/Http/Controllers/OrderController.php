@@ -179,41 +179,37 @@ class OrderController extends Controller
 
     public function update(Request $request)
     {
+        \Log::info('Update triggered:', $request->all()); // Add this to check logs
+    
         $order = session()->get('order');
         $itemId = $request->input('item_id');
         $action = $request->input('action');
-
+    
         if (!$order || !isset($order[$itemId])) {
             return response()->json(['success' => false, 'message' => 'Item not found.']);
         }
-
-        // Get the current quantity
-        $quantity = $order[$itemId]['quantity'] ?? 1;
-
-        // Update based on the action
+    
+        $quantity = $order[$itemId]['quantity'];
+    
         if ($action === 'increase') {
             $quantity++;
         } elseif ($action === 'decrease' && $quantity > 1) {
             $quantity--;
         }
-
-        // Update the quantity in the session
+    
         $order[$itemId]['quantity'] = $quantity;
         session()->put('order', $order);
-
-        // Calculate updated item total and overall order total
+    
         $itemTotal = $order[$itemId]['price'] * $quantity;
         $total = collect($order)->sum(fn($item) => $item['price'] * $item['quantity']);
-
+    
         return response()->json([
             'success' => true,
             'quantity' => $quantity,
             'item_total' => $itemTotal,
-            'total' => $total,
+            'total' => $total
         ]);
     }
-
- 
     
     public function completeOrder($id)
     {
@@ -290,35 +286,35 @@ class OrderController extends Controller
     }
 
 
-    public function dailyReport()
-    {
-        // Kunin ang mga paid orders ngayong araw
-        $paidOrdersToday = Order::with('items')
-            ->where('status', 'paid')
-            ->whereDate('created_at', now()->toDateString())
-            ->get();
+    // public function dailyReport()
+    // {
+    //     // Kunin ang mga paid orders ngayong araw
+    //     $paidOrdersToday = Order::with('items')
+    //         ->where('status', 'paid')
+    //         ->whereDate('created_at', now()->toDateString())
+    //         ->get();
 
-        // Compute kabuuang halaga ng paid orders ngayong araw
-        $totalPaidAmount = $paidOrdersToday->sum('total_price');
+    //     // Compute kabuuang halaga ng paid orders ngayong araw
+    //     $totalPaidAmount = $paidOrdersToday->sum('total_price');
 
-        // Group items na na-order ngayong araw
-        $orderedItems = $paidOrdersToday->flatMap(function ($order) {
-            return $order->items;
-        })->groupBy('id')
-        ->map(function ($items, $itemId) {
-            $firstItem = $items->first();
-            return [
-                'name' => $firstItem->name,
-                'total_quantity' => $items->sum('pivot.quantity'),
-            ];
-        });
+    //     // Group items na na-order ngayong araw
+    //     $orderedItems = $paidOrdersToday->flatMap(function ($order) {
+    //         return $order->items;
+    //     })->groupBy('id')
+    //     ->map(function ($items, $itemId) {
+    //         $firstItem = $items->first();
+    //         return [
+    //             'name' => $firstItem->name,
+    //             'total_quantity' => $items->sum('pivot.quantity'),
+    //         ];
+    //     });
 
-        return view('reports', [
-            'paidOrdersToday' => $paidOrdersToday,
-            'totalPaidAmount' => $totalPaidAmount,
-            'orderedItems' => $orderedItems,
-        ]);
-    }
+    //     return view('reports', [
+    //         'paidOrdersToday' => $paidOrdersToday,
+    //         'totalPaidAmount' => $totalPaidAmount,
+    //         'orderedItems' => $orderedItems,
+    //     ]);
+    // }
     public function viewCart()
 {
     $totalAmount = 0;
