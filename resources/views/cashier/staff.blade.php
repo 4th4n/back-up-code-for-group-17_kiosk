@@ -41,6 +41,7 @@
                                         <th>Order Number</th>
                                         <th>Items</th>
                                         <th class="text-end">Total</th>
+                                        <th class="text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -80,6 +81,21 @@
                                             <td class="text-end">
                                                 <span class="fw-bold text-success">₱{{ number_format($order->total_price, 2) }}</span>
                                             </td>
+                                            <td class="text-center">
+                                                @if($order->is_ready ?? false)
+                                                    <span class="badge bg-success py-2 px-3">
+                                                        <i class="bi bi-check-circle-fill me-1"></i> Ready for Pickup
+                                                    </span>
+                                                @else
+                                                    <button type="button" class="btn btn-primary ready-btn" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#readyModal" 
+                                                            data-order-id="{{ $order->id }}"
+                                                            data-order-number="{{ $order->order_number }}">
+                                                        <i class="bi bi-bell-fill me-1"></i> Ready to Reserve
+                                                    </button>
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -87,6 +103,7 @@
                                     <tr>
                                         <td colspan="3" class="text-end fw-bold">Total Revenue:</td>
                                         <td class="text-end fw-bold text-success">₱{{ number_format($orders->sum('total_price'), 2) }}</td>
+                                        <td></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -99,6 +116,43 @@
                 <a href="{{ route('cashier.index') }}" class="btn btn-outline-primary">
                     <i class="bi bi-arrow-left me-1"></i> Back to Cashier Dashboard
                 </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ready to Reserve Modal -->
+<div class="modal fade" id="readyModal" tabindex="-1" aria-labelledby="readyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="readyModalLabel">
+                    <i class="bi bi-bell-fill me-2"></i>Mark Order as Ready
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <i class="bi bi-bag-check-fill text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h4 class="mb-3">Ready to Reserve</h4>
+                <p class="mb-1">You are marking this order as ready for pickup:</p>
+                <h3 class="mb-3 text-primary order-number-display"></h3>
+                <p class="text-muted">This will notify the customer that their order is ready for pickup.</p>
+                
+                <form id="markAsReadyForm" action="{{ route('cashier.markOrderReady') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_id" id="orderIdInput">
+                    <input type="hidden" name="redirect_to_display" value="1">
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </button>
+                <button type="submit" form="markAsReadyForm" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Confirm Ready
+                </button>
             </div>
         </div>
     </div>
@@ -171,5 +225,42 @@
     tbody tr:hover {
         background-color: rgba(67, 97, 238, 0.05);
     }
+    
+    /* Ready button styles */
+    .ready-btn {
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .ready-btn:hover {
+        background-color: #3651d1;
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+    }
 </style>
+
+{{-- JavaScript for Ready to Reserve functionality --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all ready buttons
+        const readyButtons = document.querySelectorAll('.ready-btn');
+        
+        // Add click event to each button
+        readyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Get order details from data attributes
+                const orderId = this.getAttribute('data-order-id');
+                const orderNumber = this.getAttribute('data-order-number');
+                
+                // Set values in the modal
+                document.getElementById('orderIdInput').value = orderId;
+                document.querySelector('.order-number-display').textContent = orderNumber;
+            });
+        });
+    });
+</script>
 @endsection

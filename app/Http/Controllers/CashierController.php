@@ -97,6 +97,29 @@ public function generateReceipt($id)
     return view('cashier.receipt', compact('order'));
 }
 
+// In your CashierController.php
+public function markOrderReady(Request $request)
+{
+    // Validate the request
+    $validated = $request->validate([
+        'order_id' => 'required|exists:orders,id',
+    ]);
 
+    // Find the order
+    $order = Order::findOrFail($request->order_id);
+    
+    // Update the order status
+    $order->is_ready = true;
+    $order->ready_at = now();
+    $order->save();
+
+    // Check if we need to redirect to display board
+    if ($request->has('redirect_to_display')) {
+        return redirect()->route('display.board');
+    }
+    
+    // Return to the paid orders page with success message
+    return redirect()->route('cashier.paidOrders')->with('success', 'Order marked as ready for pickup!');
+}
 
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RestockController;
-
+use App\Http\Controllers\DisplayController;
 Route::get('/admin/restock', [RestockController::class, 'index'])->name('restock.index');
 Route::post('/admin/restock', [RestockController::class, 'store'])->name('restock.store');
 
@@ -108,3 +108,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 });
 Route::get('/cart/view', [OrderController::class, 'viewCart'])->name('cart.view');
+// In routes/web.php
+Route::get('/display-board', [DisplayController::class, 'index'])->name('display.board');
+Route::post('/cashier/mark-order-ready', [CashierController::class, 'markOrderReady'])->name('cashier.markOrderReady');
+
+Route::get('/display', [OrderController::class, 'showReadyOrders'])->name('orders.display');
+Route::post('/order/{id}/ready', [OrderController::class, 'markAsReady'])->name('order.ready');
+Route::post('/order/{id}/picked-up', [OrderController::class, 'markAsPickedUp'])->name('order.pickedup');
+Route::post('/auto-pickup', [OrderController::class, 'autoPickUp'])->name('order.autoPickUp');

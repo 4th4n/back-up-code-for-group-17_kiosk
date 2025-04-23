@@ -462,8 +462,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const voiceSearchBtn = document.getElementById("voice-search-btn");
     const searchInput = document.getElementById("search-input");
     const items = document.querySelectorAll(".product-item");
-    
-    // Category routes mapping
+
     const categoryRoutes = {
         "breakfast": "{{ route('menu.category', 'breakfast') }}",
         "lunch": "{{ route('menu.category', 'lunch') }}",
@@ -474,8 +473,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "junk foods": "{{ route('menu.category', 'junk foods') }}",
         "chocolates": "{{ route('menu.category', 'chocolates') }}"
     };
-    
-    // Custom keyword mapping
+
     const customKeywordMap = {
         "choco nuts": "choco knots",
         "choco nots": "choco knots",
@@ -485,50 +483,90 @@ document.addEventListener("DOMContentLoaded", function () {
         "waffelo": "wafello",
         "waffle o": "wafello"
     };
-    
-    // Check if browser supports speech recognition
+
     if ("webkitSpeechRecognition" in window) {
         const recognition = new webkitSpeechRecognition();
         recognition.lang = "en-US";
         recognition.interimResults = false;
-        
-        // Start voice recognition on button click
+
         voiceSearchBtn.addEventListener("click", () => {
-            // Visual feedback that voice recognition is active
             voiceSearchBtn.classList.add('btn-danger');
             voiceSearchBtn.innerHTML = '<i class="bi bi-mic-fill"></i>';
             recognition.start();
         });
-        
-        // Process recognition result
+
         recognition.onresult = event => {
             let query = event.results[0][0].transcript.toLowerCase();
             searchInput.value = query;
-            
-            // Reset button appearance
+
             voiceSearchBtn.classList.remove('btn-danger');
             voiceSearchBtn.innerHTML = '<i class="bi bi-mic"></i>';
-            
-            // Check for custom keyword mapping
+
             if (customKeywordMap[query]) {
                 query = customKeywordMap[query];
             }
-            
-            // Check if query matches a category
-            if (categoryRoutes[query]) {
-                window.location.href = categoryRoutes[query];
-            } else {
-                filterProducts(query);
+
+            let categoryFound = null;
+            let priceLimit = null;
+
+            for (const key in categoryRoutes) {
+                if (query.includes(key)) {
+                    categoryFound = key;
+                    break;
+                }
             }
+
+            const belowPriceMatch = query.match(/(?:below|under)\s+(\d+)\s*(?:pesos)?/);
+            if (belowPriceMatch) {
+                priceLimit = parseFloat(belowPriceMatch[1]);
+            }
+
+            if (categoryFound && priceLimit !== null) {
+                items.forEach(item => {
+                    const price = parseFloat(item.getAttribute('data-price'));
+                    const itemCategory = item.getAttribute('data-category')?.toLowerCase();
+                    const isCategoryMatch = itemCategory === categoryFound;
+
+                    if (isCategoryMatch && !isNaN(price) && price < priceLimit) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                const noResults = document.getElementById('no-results-message');
+                if (noResults) noResults.remove();
+                updatePagination();
+                return;
+            }
+
+            if (categoryFound) {
+                window.location.href = categoryRoutes[categoryFound];
+                return;
+            }
+
+            if (priceLimit !== null) {
+                items.forEach(item => {
+                    const price = parseFloat(item.getAttribute('data-price'));
+                    if (!isNaN(price) && price < priceLimit) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                const noResults = document.getElementById('no-results-message');
+                if (noResults) noResults.remove();
+                updatePagination();
+                return;
+            }
+
+            filterProducts(query);
         };
-        
-        // Handle recognition errors
+
         recognition.onerror = event => {
             console.error("Voice search error:", event.error);
             voiceSearchBtn.classList.remove('btn-danger');
             voiceSearchBtn.innerHTML = '<i class="bi bi-mic"></i>';
-            
-            // Show error toast
+
             const toastContainer = document.createElement('div');
             toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
             toastContainer.style.zIndex = '5';
@@ -544,13 +582,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
             `;
             document.body.appendChild(toastContainer);
-            
             const toastEl = document.querySelector('.toast');
             const toast = new bootstrap.Toast(toastEl);
             toast.show();
         };
-        
-        // On recognition end
+
         recognition.onend = () => {
             voiceSearchBtn.classList.remove('btn-danger');
             voiceSearchBtn.innerHTML = '<i class="bi bi-mic"></i>';
@@ -559,17 +595,16 @@ document.addEventListener("DOMContentLoaded", function () {
         voiceSearchBtn.disabled = true;
         voiceSearchBtn.title = "Voice search not supported in this browser";
     }
-    
-    // Filter products function
+
     function filterProducts(query) {
         query = normalizeText(query);
         const queryKeywords = query.split(" ");
         let resultsFound = false;
-        
+
         items.forEach(item => {
             const name = normalizeText(item.getAttribute("data-name"));
             const isMatch = queryKeywords.every(keyword => fuzzyMatch(name, keyword));
-            
+
             if (isMatch) {
                 item.style.display = "";
                 resultsFound = true;
@@ -577,14 +612,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 item.style.display = "none";
             }
         });
-        
+
+        const noResults = document.getElementById('no-results-message');
         if (!resultsFound) {
-            // Create a "No results" message if it doesn't exist
-            if (!document.getElementById('no-results-message')) {
-                const noResults = document.createElement('div');
-                noResults.id = 'no-results-message';
-                noResults.className = 'col-12 text-center py-4';
-                noResults.innerHTML = `
+            if (!noResults) {
+                const div = document.createElement('div');
+                div.id = 'no-results-message';
+                div.className = 'col-12 text-center py-4';
+                div.innerHTML = `
                     <div class="alert alert-info">
                         <i class="bi bi-search me-2"></i>
                         No items match your search for "<strong>${query}</strong>"
@@ -593,37 +628,25 @@ document.addEventListener("DOMContentLoaded", function () {
                         <i class="bi bi-arrow-repeat me-2"></i>Show All Items
                     </button>
                 `;
-                document.getElementById('product-list').appendChild(noResults);
+                document.getElementById('product-list').appendChild(div);
             }
-        } else {
-            // Remove "No results" message if it exists
-            const noResults = document.getElementById('no-results-message');
-            if (noResults) {
-                noResults.remove();
-            }
+        } else if (noResults) {
+            noResults.remove();
         }
-        
-        // Update pagination
+
         updatePagination();
     }
-    
-    // Normalize text function
+
     function normalizeText(text) {
-        return text
-            .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, "")
-            .replace(/-/g, " ")
-            .trim();
+        return text.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/-/g, " ").trim();
     }
-    
-    // Fuzzy matching function
+
     function fuzzyMatch(name, keyword) {
-        return name.includes(keyword) || 
-               areStringsSimilar(name, keyword) || 
-               soundexMatch(name, keyword);
+        return name.includes(keyword) ||
+            areStringsSimilar(name, keyword) ||
+            soundexMatch(name, keyword);
     }
-    
-    // Simple Soundex implementation
+
     function soundex(str) {
         const a = str.toLowerCase().split('');
         const mappings = {
@@ -635,35 +658,26 @@ document.addEventListener("DOMContentLoaded", function () {
             m: 5, n: 5,
             r: 6
         };
-        
         const first = a[0];
-        const r = a
-            .slice(1)
+        const r = a.slice(1)
             .map(v => mappings[v])
             .filter((v, i, a) => v !== a[i - 1] && v !== undefined);
         r.unshift(first);
         return (r[0] + r.slice(1).join('')).toUpperCase();
     }
-    
+
     function soundexMatch(str1, str2) {
         return soundex(str1) === soundex(str2);
     }
-    
-    // Levenshtein distance for string similarity
+
     function levenshteinDistance(a, b) {
         if (a.length === 0) return b.length;
         if (b.length === 0) return a.length;
-        
+
         const matrix = [];
-        
-        for (let i = 0; i <= b.length; i++) {
-            matrix[i] = [i];
-        }
-        
-        for (let j = 0; j <= a.length; j++) {
-            matrix[0][j] = j;
-        }
-        
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
         for (let i = 1; i <= b.length; i++) {
             for (let j = 1; j <= a.length; j++) {
                 const cost = a[j - 1] === b[i - 1] ? 0 : 1;
@@ -674,134 +688,97 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
             }
         }
-        
+
         return matrix[b.length][a.length];
     }
-    
+
     function areStringsSimilar(str1, str2) {
         return levenshteinDistance(str1, str2) <= 2;
     }
-    
-    // Reset search function (to be called from HTML)
-    window.resetSearch = function() {
+
+    window.resetSearch = function () {
         searchInput.value = '';
-        items.forEach(item => {
-            item.style.display = '';
-        });
-        
+        items.forEach(item => item.style.display = '');
         const noResults = document.getElementById('no-results-message');
-        if (noResults) {
-            noResults.remove();
-        }
-        
+        if (noResults) noResults.remove();
         updatePagination();
     };
-    
-    // Pagination script
+
     function updatePagination() {
-        const visibleItems = Array.from(items).filter(item => 
-            item.style.display !== 'none'
-        );
-        
+        const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
         const perPage = 6;
-        const totalVisibleItems = visibleItems.length;
-        const totalPages = Math.ceil(totalVisibleItems / perPage);
+        const totalPages = Math.ceil(visibleItems.length / perPage);
         const paginationEl = document.getElementById('pagination');
-        
-        // Clear pagination
+
         paginationEl.innerHTML = '';
-        
-        // Don't show pagination if there are no results or only one page
-        if (totalVisibleItems === 0 || totalPages <= 1) {
-            return;
-        }
-        
-        // Previous button
+        if (visibleItems.length === 0 || totalPages <= 1) return;
+
         const prevLi = document.createElement('li');
         prevLi.classList.add('page-item');
         prevLi.innerHTML = `
             <a class="page-link" href="#" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
-            </a>
-        `;
+            </a>`;
         paginationEl.appendChild(prevLi);
-        
-        // Page numbers
+
         for (let i = 1; i <= totalPages; i++) {
             const li = document.createElement('li');
             li.classList.add('page-item');
             if (i === 1) li.classList.add('active');
-            
+
             const a = document.createElement('a');
             a.classList.add('page-link');
             a.href = '#';
             a.textContent = i;
-            a.addEventListener('click', function(e) {
+            a.addEventListener('click', function (e) {
                 e.preventDefault();
                 showPage(i, visibleItems);
-                document.querySelectorAll('#pagination .page-item').forEach(li => 
-                    li.classList.remove('active')
-                );
+                document.querySelectorAll('#pagination .page-item').forEach(li => li.classList.remove('active'));
                 li.classList.add('active');
             });
-            
+
             li.appendChild(a);
             paginationEl.appendChild(li);
         }
-        
-        // Next button
+
         const nextLi = document.createElement('li');
         nextLi.classList.add('page-item');
         nextLi.innerHTML = `
             <a class="page-link" href="#" aria-label="Next">
                 <span aria-hidden="true">&raquo;</span>
-            </a>
-        `;
+            </a>`;
         paginationEl.appendChild(nextLi);
-        
-        // Show first page by default
+
         showPage(1, visibleItems);
     }
-    
+
     function showPage(page, visibleItems) {
         const perPage = 6;
         const start = (page - 1) * perPage;
         const end = start + perPage;
-        
-        // Hide all items first
-        items.forEach(item => {
-            item.style.display = 'none';
-        });
-        
-        // Show only the items for current page
-        visibleItems.slice(start, end).forEach(item => {
-            item.style.display = '';
-        });
-        
-        // Smooth scroll to top of products
+
+        items.forEach(item => item.style.display = 'none');
+        visibleItems.slice(start, end).forEach(item => item.style.display = '');
+
         document.getElementById('product-list').scrollIntoView({
             behavior: 'smooth',
             block: 'start'
         });
     }
-    
-    // Initialize pagination on page load
+
     updatePagination();
 });
 
-// Alert dismissal
+// Auto-dismiss success alert
 document.addEventListener('DOMContentLoaded', function () {
     const alert = document.querySelector('.alert-success');
     if (alert) {
         setTimeout(() => {
             alert.classList.remove('show');
-            setTimeout(() => {
-                alert.remove();
-            }, 300);
+            setTimeout(() => alert.remove(), 300);
         }, 3000);
     }
 });
-
 // Delete confirmation
 function confirmDelete(event, form) {
     event.preventDefault();
@@ -811,4 +788,20 @@ function confirmDelete(event, form) {
     }
 }
 </script>
+
+<style>
+    
+/* Make the voice search icon bigger */
+#voice-search-btn i.bi {
+  font-size: 1.5rem; /* Increase this value to make the icon even bigger */
+}
+
+/* Ensure the button size adjusts to fit the larger icon */
+#voice-search-btn {
+  padding: 0.375rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
 @endsection 

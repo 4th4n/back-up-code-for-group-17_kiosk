@@ -327,6 +327,46 @@ class OrderController extends Controller
 
     return view('partials.cart-modal', compact('totalAmount'))->render();
 }
+// OrderController.php
+
+public function showReadyOrders()
+{
+    $readyOrders = Order::where('status', 'ready')
+                        ->orderBy('ready_at')
+                        ->get();
+
+    return view('orders.display', compact('readyOrders'));
+}
+
+public function markAsReady($id)
+{
+    $order = Order::findOrFail($id);
+    $order->status = 'ready';
+    $order->ready_at = now();
+    $order->save();
+
+    return redirect()->back()->with('success', 'Order marked as ready.');
+}
+
+public function markAsPickedUp($id)
+{
+    $order = Order::findOrFail($id);
+    $order->delete(); // Or change status if you want to archive
+
+    return redirect()->back()->with('success', 'Order picked up.');
+}
+// OrderController.php
+public function autoPickUp(Request $request)
+{
+    $order = Order::find($request->id);
+    if ($order && $order->status === 'ready') {
+        $order->status = 'picked_up';
+        $order->save();
+    }
+
+    return response()->json(['success' => true]);
+}
+
 
     
 }

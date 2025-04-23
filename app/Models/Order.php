@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = ['order_number', 'total_price', 'completed'];
+    protected $fillable = ['order_number', 'total_price', 'completed',
+    'ready_at'];
 
     public function items()
     {
@@ -18,7 +19,7 @@ class Order extends Model
     }
 
     protected $dates = ['completed_at']; // Ensure completed_at is cast as a Carbon date.
-
+    protected $casts = ['ready_at' => 'datetime',];
 public function completeOrder()
 {
     $this->completed = true;
