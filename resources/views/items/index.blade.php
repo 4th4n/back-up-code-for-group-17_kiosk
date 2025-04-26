@@ -148,6 +148,57 @@
         background-color: #f1f3f5;
     }
 </style>
+<script>
+// Function to check time and reset food quantities if needed
+function checkTimeAndResetFood() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    console.log(`Current time: ${hours}:${minutes}`);
+
+    // FOR TESTING: Force reset regardless of time (comment out after testing)
+    const forceReset = true;
+
+    // Check if it's 4:00 PM (16:00) or if we're forcing reset for testing
+    if ((hours === 16 && minutes === 0) || forceReset) {
+        console.log('Condition met! Attempting to reset food quantities...');
+        
+        // Send AJAX request to reset food quantities
+        fetch('{{ route("items.reset-food") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => {
+            console.log('Response received:', response);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data received:', data);
+            if (data.success) {
+                console.log(data.message);
+                // Success message logged, no alert, no page reload
+                
+                // Option: If you need to update the UI without page reload,
+                // you could implement that here instead:
+                // updateFoodQuantitiesDisplay();
+            }
+        })
+        .catch(error => {
+            console.error('Error resetting food quantities:', error);
+        });
+    }
+}
+
+// For testing - execute immediately
+console.log('Script loaded, executing check...');
+checkTimeAndResetFood();
+
+// Set interval to check every minute (for normal operation)
+setInterval(checkTimeAndResetFood, 60000);
+</script>
 
 <script>
     function confirmDelete(button) {
@@ -157,4 +208,5 @@
         deleteModal.show();
     }
 </script>
+
 @endsection

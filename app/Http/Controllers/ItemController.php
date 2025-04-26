@@ -165,8 +165,44 @@ public function update(Request $request, $id)
     return redirect()->route('items.index')->with('success', 'Item updated successfully!');
 }
 
+public function resetFoodQuantities() {
+    $foodCategories = ['breakfast', 'lunch', 'snacks'];
+    
+    $affected = Item::whereIn('category', $foodCategories)
+                ->update(['quantity' => 0]);
+    
+    return response()->json([
+        'success' => true,
+        'message' => "Reset quantities for {$affected} food items.",
+        'affected' => $affected
+    ]);
+}
 
-
+// public function testResetFoodQuantities()
+// {
+//     // Get current quantities before reset
+//     $beforeReset = Item::whereIn('category', ['breakfast', 'lunch', 'snacks'])
+//                        ->select('id', 'name', 'category', 'quantity')
+//                        ->get();
+    
+//     // Perform the reset
+//     $affected = Item::whereIn('category', ['breakfast', 'lunch', 'snacks'])
+//                    ->update(['quantity' => 0]);
+    
+//     // Get quantities after reset
+//     $afterReset = Item::whereIn('category', ['breakfast', 'lunch', 'snacks'])
+//                      ->select('id', 'name', 'category', 'quantity')
+//                      ->get();
+    
+//     // Return detailed information for verification
+//     return response()->json([
+//         'success' => true,
+//         'message' => "Reset quantities for {$affected} food items.",
+//         'affected' => $affected,
+//         'before_reset' => $beforeReset,
+//         'after_reset' => $afterReset
+//     ]);
+// }
 
 
 }

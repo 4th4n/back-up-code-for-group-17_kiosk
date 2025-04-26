@@ -116,3 +116,6 @@ Route::get('/display', [OrderController::class, 'showReadyOrders'])->name('order
 Route::post('/order/{id}/ready', [OrderController::class, 'markAsReady'])->name('order.ready');
 Route::post('/order/{id}/picked-up', [OrderController::class, 'markAsPickedUp'])->name('order.pickedup');
 Route::post('/auto-pickup', [OrderController::class, 'autoPickUp'])->name('order.autoPickUp');
+// Add this to your routes/web.php file
+Route::post('/reset-food-quantities', [App\Http\Controllers\ItemController::class, 'resetFoodQuantities'])->name('items.reset-food');
+// Route::get('/test-reset-food', [App\Http\Controllers\ItemController::class, 'testResetFoodQuantities']);
