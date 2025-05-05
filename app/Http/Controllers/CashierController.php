@@ -97,29 +97,47 @@ public function generateReceipt($id)
     return view('cashier.receipt', compact('order'));
 }
 
-// In your CashierController.php
+/**
+ * Mark an order as ready for pickup using AJAX
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return \Illuminate\Http\JsonResponse
+ */
 public function markOrderReady(Request $request)
 {
-    // Validate the request
-    $validated = $request->validate([
-        'order_id' => 'required|exists:orders,id',
-    ]);
+    try {
+        // Validate the request
+        $validated = $request->validate([
+            'order_id' => 'required|exists:orders,id',
+        ]);
 
-    // Find the order
-    $order = Order::findOrFail($request->order_id);
-    
-    // Update the order status
-    $order->is_ready = true;
-    $order->ready_at = now();
-    $order->save();
+        // Find the order
+        $order = Order::findOrFail($validated['order_id']);
+        
+        // Update the order
+        $order->is_ready = true;
+        $order->ready_at = now();
+        $order->save();
 
-    // Check if we need to redirect to display board
-    if ($request->has('redirect_to_display')) {
-        return redirect()->route('display.board');
+        // Broadcasting event to update board display in real-time (optional)
+        event(new OrderReadyEvent($order));
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Order marked as ready successfully',
+            'order' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'ready_at' => $order->ready_at,
+                'ready_at_human' => $order->ready_at->diffForHumans(),
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to mark order as ready: ' . $e->getMessage()
+        ], 500);
     }
-    
-    // Return to the paid orders page with success message
-    return redirect()->route('cashier.paidOrders')->with('success', 'Order marked as ready for pickup!');
 }
 
 }

@@ -119,3 +119,4 @@ Route::post('/auto-pickup', [OrderController::class, 'autoPickUp'])->name('order
 // Add this to your routes/web.php file
 Route::post('/reset-food-quantities', [App\Http\Controllers\ItemController::class, 'resetFoodQuantities'])->name('items.reset-food');
 // Route::get('/test-reset-food', [App\Http\Controllers\ItemController::class, 'testResetFoodQuantities']);
+Route::get('/api/orders/ready', 'OrderController@getReadyOrders')->name('api.orders.ready');

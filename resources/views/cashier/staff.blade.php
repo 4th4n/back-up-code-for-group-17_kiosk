@@ -140,17 +140,23 @@
                 <h3 class="mb-3 text-primary order-number-display"></h3>
                 <p class="text-muted">This will notify the customer that their order is ready for pickup.</p>
                 
-                <form id="markAsReadyForm" action="{{ route('cashier.markOrderReady') }}" method="POST">
+                <!-- Form will not be submitted directly. AJAX will be used instead -->
+                <form id="markAsReadyForm">
                     @csrf
                     <input type="hidden" name="order_id" id="orderIdInput">
-                    <input type="hidden" name="redirect_to_display" value="1">
                 </form>
+                
+                <!-- Success message after AJAX completion -->
+                <div id="readySuccessAlert" class="alert alert-success mt-3" style="display: none;">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Order marked as ready successfully!
+                </div>
             </div>
             <div class="modal-footer justify-content-center">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </button>
-                <button type="submit" form="markAsReadyForm" class="btn btn-primary">
+                <button type="button" id="confirmReadyBtn" class="btn btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Confirm Ready
                 </button>
             </div>
@@ -241,13 +247,22 @@
         border-radius: 12px;
         overflow: hidden;
     }
+    
+    /* Loading spinner styles */
+    .spinner-border {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
 </style>
 
-{{-- JavaScript for Ready to Reserve functionality --}}
+{{-- JavaScript for Ready to Reserve functionality with AJAX --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Get all ready buttons
         const readyButtons = document.querySelectorAll('.ready-btn');
+        const confirmReadyBtn = document.getElementById('confirmReadyBtn');
+        const modal = document.getElementById('readyModal');
+        const modalInstance = new bootstrap.Modal(modal);
         
         // Add click event to each button
         readyButtons.forEach(button => {
@@ -259,6 +274,63 @@
                 // Set values in the modal
                 document.getElementById('orderIdInput').value = orderId;
                 document.querySelector('.order-number-display').textContent = orderNumber;
+                
+                // Hide success message when opening modal
+                document.getElementById('readySuccessAlert').style.display = 'none';
+            });
+        });
+        
+        // Add click event to confirm button
+        confirmReadyBtn.addEventListener('click', function() {
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+            
+            // Get form data
+            const orderId = document.getElementById('orderIdInput').value;
+            const token = document.querySelector('input[name="_token"]').value;
+            
+            // Make AJAX request
+            fetch("{{ route('cashier.markOrderReady') }}", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    order_id: orderId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Show success message
+                document.getElementById('readySuccessAlert').style.display = 'block';
+                
+                // Reset button state
+                confirmReadyBtn.disabled = false;
+                confirmReadyBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Confirm Ready';
+                
+                // Update UI to show order is ready
+                const targetRow = document.querySelector(`[data-order-id="${orderId}"]`).closest('tr');
+                const actionCell = targetRow.querySelector('td:last-child');
+                actionCell.innerHTML = `
+                    <span class="badge bg-success py-2 px-3">
+                        <i class="bi bi-check-circle-fill me-1"></i> Ready for Pickup
+                    </span>
+                `;
+                
+                // Close modal after short delay
+                setTimeout(() => {
+                    modalInstance.hide();
+                }, 1500);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Reset button state
+                confirmReadyBtn.disabled = false;
+                confirmReadyBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Confirm Ready';
+                alert('An error occurred while marking the order as ready.');
             });
         });
     });
