@@ -123,11 +123,11 @@ Route::get('/api/orders/ready', 'OrderController@getReadyOrders')->name('api.ord
 
 use App\Models\Order;
 
-Route::get('/print-receipt/{orderNumber}', function ($orderNumber) {
+Route::get('/print-ordernumber/{orderNumber}', function ($orderNumber) {
     $order = Order::with('items')->where('order_number', $orderNumber)->firstOrFail();
 
     $receipt = "==============================\n";
-    $receipt .= "       ORDER RECEIPT\n";
+    $receipt .= "       ORDER Number\n";
     $receipt .= "==============================\n";
     $receipt .= "Order Number: #{$order->order_number}\n\n";
 

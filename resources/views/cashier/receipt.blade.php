@@ -32,17 +32,41 @@
 
                     <hr>
 
-                    <div class="text-center">
-                        <p class="mb-0" style="font-weight: bold; color: #e74c3c;">Status: <span class="text-success">Paid</span></p>
-                        <p class="mt-2">Thank you for your purchase!</p>
-                        <a href="{{ route('cashier.index') }}" class="btn btn-success mt-3" style="border-radius: 10px; padding: 10px 20px; font-weight: bold;">Back to Cahsier Dashboard</a>
-                    </div>
+                    <button onclick="printToBluetooth()" class="btn btn-primary mt-3">🖨️ Print to Bluetooth</button>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+async function printToBluetooth() {
+    try {
+        // Get plain text from receipt container
+        const receiptElement = document.getElementById('receipt-to-print');
+        const text = receiptElement.innerText;
+        const encoder = new TextEncoder();
+        const data = encoder.encode(text);
 
+        // Request Bluetooth device
+        const device = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'POS' }], // Replace with actual printer name or leave generic
+            optionalServices: [0x1101] // Replace with your printer's actual service UUID if needed
+        });
+
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(0x1101);
+        const characteristic = await service.getCharacteristic(0x2A3D);
+
+        await characteristic.writeValue(data);
+
+        alert('✅ Receipt sent to Bluetooth printer!');
+    } catch (error) {
+        console.error(error);
+        alert('❌ Print failed: ' + error.message);
+    }
+}
+</script>
 <style>
     .card {
     border-radius: 15px;
