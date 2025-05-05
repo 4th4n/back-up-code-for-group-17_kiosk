@@ -124,7 +124,7 @@ Route::get('/api/orders/ready', 'OrderController@getReadyOrders')->name('api.ord
 use App\Models\Order;
 
 Route::get('/print-receipt/{orderNumber}', function ($orderNumber) {
-    $order = Order::where('order_number', $orderNumber)->firstOrFail();
+    $order = Order::with(['items.item'])->where('order_number', $orderNumber)->firstOrFail();
 
     $receipt = "==============================\n";
     $receipt .= "       ORDER RECEIPT\n";
@@ -132,8 +132,9 @@ Route::get('/print-receipt/{orderNumber}', function ($orderNumber) {
     $receipt .= "Order Number: #{$order->order_number}\n\n";
 
     foreach ($order->items as $item) {
-        $line = "{$item->quantity} x {$item->item->name}";
-        $line = str_pad($line, 25); // pad to align
+        $itemName = $item->item->name ?? 'Unknown Item';
+        $line = "{$item->quantity} x {$itemName}";
+        $line = str_pad($line, 25);
         $line .= number_format($item->quantity * $item->price, 2);
         $receipt .= $line . "\n";
     }
