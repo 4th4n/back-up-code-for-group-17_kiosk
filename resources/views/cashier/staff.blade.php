@@ -157,7 +157,7 @@
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </button>
                 <button type="button" id="confirmReadyBtn" class="btn btn-primary">
-                    <i class="bi bi-check-lg me-1"></i> Confirm Ready
+                    <i class="bi bi-check-lg me-1"></i> Confirm Readyyyyyyyyyyyyyyyyyyy
                 </button>
             </div>
         </div>
