@@ -89,83 +89,142 @@ class OrderController extends Controller
     // }
     
   
-    public function checkout(Request $request)
-    {
-        DB::beginTransaction();
+    // public function checkout(Request $request)
+    // {
+    //     DB::beginTransaction();
         
-        try {
-            // Get order data from session
-            $orderData = $request->session()->get('order');
+    //     try {
+    //         // Get order data from session
+    //         $orderData = $request->session()->get('order');
         
-            // Validate if the order has items
-            if (!$orderData || !is_array($orderData)) {
-                return redirect()->route('kiosk.index')->with('error', 'Walang order na available.');
-            }
+    //         // Validate if the order has items
+    //         if (!$orderData || !is_array($orderData)) {
+    //             return redirect()->route('kiosk.index')->with('error', 'Walang order na available.');
+    //         }
 
-            // Set default quantity to 1 if not set, and compute the total price
-            $orderData = collect($orderData)->map(function ($details) {
-                // Default quantity to 1 if not already set or less than 1
-                $details['quantity'] = isset($details['quantity']) && $details['quantity'] > 0 ? $details['quantity'] : 1;
-                return $details;
-            })->toArray();
+    //         // Set default quantity to 1 if not set, and compute the total price
+    //         $orderData = collect($orderData)->map(function ($details) {
+    //             // Default quantity to 1 if not already set or less than 1
+    //             $details['quantity'] = isset($details['quantity']) && $details['quantity'] > 0 ? $details['quantity'] : 1;
+    //             return $details;
+    //         })->toArray();
 
-            // Calculate total price based on updated quantities
-            $totalPrice = collect($orderData)->sum(function ($details) {
-                return $details['price'] * $details['quantity'];
-            });
+    //         // Calculate total price based on updated quantities
+    //         $totalPrice = collect($orderData)->sum(function ($details) {
+    //             return $details['price'] * $details['quantity'];
+    //         });
 
-            // Create a new order with a unique order number
-            $order = Order::create([
-                'order_number' => strtoupper(str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT)),
-                'total_price' => $totalPrice,
-                'completed' => false,
-            ]);
+    //         // Create a new order with a unique order number
+    //         $order = Order::create([
+    //             'order_number' => strtoupper(str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT)),
+    //             'total_price' => $totalPrice,
+    //             'completed' => false,
+    //         ]);
 
-            // Process each item in the order
-            foreach ($orderData as $itemId => $details) {
-                // Find the item in the database
-                $item = Item::find($itemId);
+    //         // Process each item in the order
+    //         foreach ($orderData as $itemId => $details) {
+    //             // Find the item in the database
+    //             $item = Item::find($itemId);
 
-                // Handle case if the item does not exist
-                if (!$item) {
-                    DB::rollBack();
-                    return redirect()->route('kiosk.index')->with('error', "Item na may ID {$itemId} ay hindi nahanap.");
-                }
+    //             // Handle case if the item does not exist
+    //             if (!$item) {
+    //                 DB::rollBack();
+    //                 return redirect()->route('kiosk.index')->with('error', "Item na may ID {$itemId} ay hindi nahanap.");
+    //             }
 
-                // Handle case if there is insufficient stock
-                if ($item->quantity < $details['quantity']) {
-                    DB::rollBack();
-                    return redirect()->route('kiosk.index')->with('error', "Kulang ang stock para sa {$item->name}.");
-                }
+    //             // Handle case if there is insufficient stock
+    //             if ($item->quantity < $details['quantity']) {
+    //                 DB::rollBack();
+    //                 return redirect()->route('kiosk.index')->with('error', "Kulang ang stock para sa {$item->name}.");
+    //             }
 
-                // Decrease the item's stock based on the quantity ordered
-                $item->decrement('quantity', $details['quantity']);
+    //             // Decrease the item's stock based on the quantity ordered
+    //             $item->decrement('quantity', $details['quantity']);
 
-                // Save the order item details in the database
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'item_id' => $itemId,
-                    'quantity' => $details['quantity'],
-                    'price' => $details['price'],
-                ]);
-            }
+    //             // Save the order item details in the database
+    //             OrderItem::create([
+    //                 'order_id' => $order->id,
+    //                 'item_id' => $itemId,
+    //                 'quantity' => $details['quantity'],
+    //                 'price' => $details['price'],
+    //             ]);
+    //         }
 
-            // Clear the session order data after checkout
-            $request->session()->forget('order');
+    //         // Clear the session order data after checkout
+    //         $request->session()->forget('order');
 
-            DB::commit();
+    //         DB::commit();
 
-            // Redirect to the order view page with the order number
-            return redirect()->route('order.view', ['orderNumber' => $order->order_number])
-                ->with('success', "Order #{$order->order_number} na-save at naka-checkout na!");
-        } catch (\Exception $e) {
-            // Rollback the transaction in case of error
-            DB::rollBack();
-            return redirect()->route('kiosk.index')->with('error', 'May error sa pag-checkout: ' . $e->getMessage());
-        }
-    }
+    //         // Redirect to the order view page with the order number
+    //         return redirect()->route('order.view', ['orderNumber' => $order->order_number])
+    //             ->with('success', "Order #{$order->order_number} na-save at naka-checkout na!");
+    //     } catch (\Exception $e) {
+    //         // Rollback the transaction in case of error
+    //         DB::rollBack();
+    //         return redirect()->route('kiosk.index')->with('error', 'May error sa pag-checkout: ' . $e->getMessage());
+    //     }
+    // }
 
     
+    public function checkout(Request $request)
+{
+    DB::beginTransaction();
+    
+    try {
+        $orderData = $request->session()->get('order');
+
+        if (!$orderData || !is_array($orderData)) {
+            return redirect()->route('kiosk.index')->with('error', 'Walang order na available.');
+        }
+
+        $orderData = collect($orderData)->map(function ($details) {
+            $details['quantity'] = isset($details['quantity']) && $details['quantity'] > 0 ? $details['quantity'] : 1;
+            return $details;
+        })->toArray();
+
+        $totalPrice = collect($orderData)->sum(function ($details) {
+            return $details['price'] * $details['quantity'];
+        });
+
+        $order = Order::create([
+            'order_number' => strtoupper(str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT)),
+            'total_price' => $totalPrice,
+            'completed' => false,
+        ]);
+
+        foreach ($orderData as $itemId => $details) {
+            $item = Item::find($itemId);
+
+            if (!$item) {
+                DB::rollBack();
+                return redirect()->route('kiosk.index')->with('error', "Item na may ID {$itemId} ay hindi nahanap.");
+            }
+
+            if ($item->quantity < $details['quantity']) {
+                DB::rollBack();
+                return redirect()->route('kiosk.index')->with('error', "Kulang ang stock para sa {$item->name}.");
+            }
+
+            $item->decrement('quantity', $details['quantity']);
+
+            OrderItem::create([
+                'order_id' => $order->id,
+                'item_id' => $itemId,
+                'quantity' => $details['quantity'],
+                'price' => $details['price'],
+            ]);
+        }
+
+        $request->session()->forget('order');
+        DB::commit();
+
+        return redirect()->route('order.print', ['orderNumber' => $order->order_number]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->route('kiosk.index')->with('error', 'May error sa pag-checkout: ' . $e->getMessage());
+    }
+}
 
     
     public function viewOrder($orderNumber)

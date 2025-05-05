@@ -120,3 +120,31 @@ Route::post('/auto-pickup', [OrderController::class, 'autoPickUp'])->name('order
 Route::post('/reset-food-quantities', [App\Http\Controllers\ItemController::class, 'resetFoodQuantities'])->name('items.reset-food');
 // Route::get('/test-reset-food', [App\Http\Controllers\ItemController::class, 'testResetFoodQuantities']);
 Route::get('/api/orders/ready', 'OrderController@getReadyOrders')->name('api.orders.ready');
+
+use App\Models\Order;
+
+Route::get('/print-receipt/{orderNumber}', function ($orderNumber) {
+    $order = Order::where('order_number', $orderNumber)->firstOrFail();
+
+    $receipt = "==============================\n";
+    $receipt .= "       ORDER RECEIPT\n";
+    $receipt .= "==============================\n";
+    $receipt .= "Order Number: #{$order->order_number}\n\n";
+
+    foreach ($order->items as $item) {
+        $line = "{$item->quantity} x {$item->item->name}";
+        $line = str_pad($line, 25); // pad to align
+        $line .= number_format($item->quantity * $item->price, 2);
+        $receipt .= $line . "\n";
+    }
+
+    $receipt .= "\n------------------------------\n";
+    $receipt .= "TOTAL: ₱" . number_format($order->total_price, 2) . "\n";
+    $receipt .= "==============================\n";
+    $receipt .= "Thank you for your order!\n";
+    $receipt .= "Keep this as your receipt.\n";
+    $receipt .= "\n\n\n";
+
+    return response($receipt)
+        ->header('Content-Type', 'text/plain');
+})->name('order.print');
