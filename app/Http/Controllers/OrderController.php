@@ -9,6 +9,10 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Session;
 use Carbon\Carbon; 
+use Mike42\Escpos\Printer;
+use Mike42\Escpos\PrintConnectors\FilePrintConnector; //for limux
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector; //for windows
+use Illuminate\Support\Facades\Route;
 
 
 class OrderController extends Controller
@@ -218,10 +222,25 @@ class OrderController extends Controller
         $request->session()->forget('order');
         DB::commit();
 
-        return redirect()->route('order.print', ['orderNumber' => $order->order_number]);
+        $request = Request::create(route('order.print', ['orderNumber' => $order->order_number]), 'GET');
+        $response = Route::dispatch($request);
 
+        // Get the content (HTML or text)
+        $content = $response->getContent();
+        
+
+        // $connector = new FilePrintConnector("/dev/usb/lp0");
+
+        
+        $connector = new WindowsPrintConnector("POS80");
+        $printer = new Printer($connector);
+        $printer->text($content);
+        $printer->cut();
+        $printer->close();
+        return redirect()->back();
     } catch (\Exception $e) {
         DB::rollBack();
+        dd($e->getMessage());
         return redirect()->route('kiosk.index')->with('error', 'May error sa pag-checkout: ' . $e->getMessage());
     }
 }
@@ -278,25 +297,7 @@ class OrderController extends Controller
         return redirect()->back()->with('success', 'Order status updated successfully.');
     }
     
-    // public function orderHistory()
-    // {
-    //     // Kunin ang lahat ng orders, paid at unpaid
-    //     $orders = Order::with('items')
-    //         ->orderBy('created_at', 'desc')
-    //         ->get();
-
-    //     // Kunin ang lahat ng paid orders para ngayong araw lamang
-    //     $paidOrdersToday = Order::where('status', 'paid')
-    //         ->whereDate('created_at', Carbon::today())
-    //         ->get();
-
-    //     // Kalkulahin ang kabuuang halaga ng paid orders ngayong araw
-    //     $totalPaidAmount = $paidOrdersToday->sum('total_price');
-
-    //     // Ibalik ang lahat ng orders at ang kabuuang halaga ng paid orders sa view
-    //     return view('admin.history', compact('orders', 'totalPaidAmount'));
-    // }
-    public function orderHistory(Request $request)
+function orderHistory(Request $request)
     {
         // Kunin ang petsa mula sa request, default sa ngayong araw
         $date = $request->input('date', date('Y-m-d'));
@@ -344,36 +345,6 @@ class OrderController extends Controller
         return redirect()->back()->with('success', 'Item removed from order successfully.');
     }
 
-
-    // public function dailyReport()
-    // {
-    //     // Kunin ang mga paid orders ngayong araw
-    //     $paidOrdersToday = Order::with('items')
-    //         ->where('status', 'paid')
-    //         ->whereDate('created_at', now()->toDateString())
-    //         ->get();
-
-    //     // Compute kabuuang halaga ng paid orders ngayong araw
-    //     $totalPaidAmount = $paidOrdersToday->sum('total_price');
-
-    //     // Group items na na-order ngayong araw
-    //     $orderedItems = $paidOrdersToday->flatMap(function ($order) {
-    //         return $order->items;
-    //     })->groupBy('id')
-    //     ->map(function ($items, $itemId) {
-    //         $firstItem = $items->first();
-    //         return [
-    //             'name' => $firstItem->name,
-    //             'total_quantity' => $items->sum('pivot.quantity'),
-    //         ];
-    //     });
-
-    //     return view('reports', [
-    //         'paidOrdersToday' => $paidOrdersToday,
-    //         'totalPaidAmount' => $totalPaidAmount,
-    //         'orderedItems' => $orderedItems,
-    //     ]);
-    // }
     public function viewCart()
 {
     $totalAmount = 0;

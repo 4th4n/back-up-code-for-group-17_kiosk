@@ -160,7 +160,7 @@ function checkTimeAndResetFood() {
     const forceReset = true;
 
     // Check if it's 4:00 PM (16:00) or if we're forcing reset for testing
-    if ((hours === 24 && minutes === 0) || forceReset) {
+    if ((hours === 16 && minutes === 0) || forceReset) {
         console.log('Condition met! Attempting to reset food quantities...');
         
         // Send AJAX request to reset food quantities
@@ -170,6 +170,7 @@ function checkTimeAndResetFood() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             }
+            3
         })
         .then(response => {
             console.log('Response received:', response);

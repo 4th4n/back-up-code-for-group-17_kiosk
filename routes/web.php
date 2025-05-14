@@ -92,7 +92,7 @@ Route::post('/cashier/order/{id}/cancel', [CashierController::class, 'cancel'])-
 // routes/web.php
 Route::get('/cashier/staff', [CashierController::class, 'paidOrders'])->name('cashier.paidOrders');
 // routes/web.php
-Route::get('/cashier/receipt/{id}', [CashierController::class, 'generateReceipt'])->name('cashier.generateReceipt');
+
 Route::get('/cashier/orders', [OrderController::class, 'fetchOrders'])->name('cashier.orders');
 Route::get('/cashier/orders', [CashierController::class, 'fetchOrders'])->name('cashier.fetchOrders');
 
@@ -149,3 +149,6 @@ Route::get('/print-ordernumber/{orderNumber}', function ($orderNumber) {
     return response($receipt)
         ->header('Content-Type', 'text/plain');
 })->name('order.print');
+
+
+Route::get('/cashier/receipt/{id}', [CashierController::class, 'generateReceipt'])->name('cashier.generateReceipt');
