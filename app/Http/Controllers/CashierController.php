@@ -9,6 +9,7 @@ use Mike42\Escpos\PrintConnectors\FilePrintConnector; //for limux
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector; //for windows
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use App\Events\OrderReadyEvent;
 
 
 class CashierController extends Controller
@@ -195,22 +196,15 @@ public function generateReceipt($id)
 public function markOrderReady(Request $request)
 {
     try {
-        // Validate the request
         $validated = $request->validate([
             'order_id' => 'required|exists:orders,id',
         ]);
 
-        // Find the order
         $order = Order::findOrFail($validated['order_id']);
-        
-        // Update the order
         $order->is_ready = true;
         $order->ready_at = now();
         $order->save();
 
-        // Broadcasting event to update board display in real-time (optional)
-        event(new OrderReadyEvent($order));
-        
         return response()->json([
             'success' => true,
             'message' => 'Order marked as ready successfully',
@@ -228,5 +222,6 @@ public function markOrderReady(Request $request)
         ], 500);
     }
 }
+
 
 }

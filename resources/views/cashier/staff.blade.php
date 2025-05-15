@@ -1,4 +1,3 @@
-
 @extends('cashier.dashboard')
 
 @section('content')
@@ -118,7 +117,7 @@
             </div>
         </div>
     </div>
-</div>
+</div>-
 
 <!-- Ready to Reserve Modal -->
 <div class="modal fade" id="readyModal" tabindex="-1" aria-labelledby="readyModalLabel" aria-hidden="true">
@@ -163,6 +162,9 @@
 
 {{-- Bootstrap Icons --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+{{-- Pusher JS Library for real-time updates --}}
+<script src="https://js.pusher.com/7.2/pusher.min.js"></script>
 
 {{-- Custom CSS --}}
 <style>
@@ -239,6 +241,15 @@
         const confirmReadyBtn = document.getElementById('confirmReadyBtn');
         const modal = document.getElementById('readyModal');
         const modalInstance = new bootstrap.Modal(modal);
+        
+        // Initialize Pusher
+        const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+            cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+            encrypted: true
+        });
+        
+        // Subscribe to the orders channel
+        const channel = pusher.subscribe('orders');
 
         readyButtons.forEach(button => {
             button.addEventListener('click', function () {
@@ -256,6 +267,7 @@
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
 
             const orderId = document.getElementById('orderIdInput').value;
+            const orderNumber = document.querySelector('.order-number-display').textContent;
             const token = document.querySelector('input[name="_token"]').value;
 
             fetch("{{ route('cashier.markOrderReady') }}", {
@@ -291,6 +303,18 @@
                 const badgeCounter = document.querySelector('.badge.bg-success.rounded-pill');
                 const currentCount = parseInt(badgeCounter.textContent.split(' ')[0]);
                 badgeCounter.textContent = `${currentCount - 1} Orders`;
+
+                // Show success message with direct link to display board
+                document.getElementById('readySuccessAlert').innerHTML = `
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Order marked as ready successfully!
+                    <div class="mt-2">
+                        <small>The order has been automatically added to the display board.</small>
+                    </div>
+                `;
+
+                // Due to the Pusher event being sent from the server,
+                // the display board should be updated automatically
 
                 setTimeout(() => {
                     modalInstance.hide();

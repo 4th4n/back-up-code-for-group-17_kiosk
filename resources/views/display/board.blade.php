@@ -44,66 +44,76 @@
 <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
 
 <script>
-   document.addEventListener('DOMContentLoaded', function () {
-    // Keep track of the currently displayed orders
-    let allOrdersData = @json($readyOrders);
+document.addEventListener('DOMContentLoaded', function () {
+    // Countdown duration (seconds)
     let countdown = 20;
-    
-    // Filter orders to only include today's orders
+
+    // State flags
+    let allOrdersCompleted = false;
+
+    // Track completed orders locally
+    let completedOrders = JSON.parse(localStorage.getItem('completedOrders') || '[]');
+
+    // Current orders shown in display
+    let ordersData = [];
+
+    // Filter orders for today (utility function)
     function filterTodayOrders(orders) {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to beginning of today
-        
+        today.setHours(0, 0, 0, 0);
         return orders.filter(order => {
-            // Convert ready_at to a Date object
             const orderDate = new Date(order.ready_at);
-            orderDate.setHours(0, 0, 0, 0); // Set to beginning of the order's day
-            
-            // Check if the order date is today
+            orderDate.setHours(0, 0, 0, 0);
             return orderDate.getTime() === today.getTime();
         });
     }
-    
-    // Get only today's orders
-    let ordersData = filterTodayOrders(allOrdersData);
-    
-    // Function to completely refresh the entire display
+
+    // Refresh the display UI
     function refreshDisplay() {
         const orderDisplay = document.getElementById('order-display');
-        
-        // If no orders, show empty state
-        if (!ordersData || ordersData.length === 0) {
+
+        if (allOrdersCompleted) {
             orderDisplay.innerHTML = `
                 <div class="text-muted fs-4 py-5">
-                    <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
-                    No orders ready for pickup today.
+                    <i class="bi bi-check-circle-fill fs-1 d-block mb-3 text-success"></i>
+                    All orders have been served today.
                 </div>
             `;
             return;
         }
-        
-        // Otherwise show the current order and queue
+
+        if (!ordersData || ordersData.length === 0) {
+            localStorage.setItem('allOrdersCompletedAt', Date.now().toString());
+            allOrdersCompleted = true;
+
+            orderDisplay.innerHTML = `
+                <div class="text-muted fs-4 py-5">
+                    <i class="bi bi-check-circle-fill fs-1 d-block mb-3 text-success"></i>
+                    All orders have been served today.
+                </div>
+            `;
+            return;
+        }
+
+        // Show current order and queue
         let displayHTML = `
             <div class="mb-5">
                 <h2 id="now-serving" class="display-1 fw-bold text-success">
                     ${ordersData[0].order_number}
                 </h2>
-                
                 <div class="mt-4">
                     <span class="badge bg-secondary fs-5">Next in: <span id="countdown">${countdown}</span>s</span>
                 </div>
             </div>
         `;
-        
-        // Only add the "Up Next" section if there are more orders
+
         if (ordersData.length > 1) {
             displayHTML += `
                 <hr>
                 <h4 class="text-muted mb-3">Up Next</h4>
                 <div id="up-next" class="d-flex justify-content-center flex-wrap gap-3">
             `;
-            
-            // Add the remaining orders
+
             for (let i = 1; i < ordersData.length; i++) {
                 displayHTML += `
                     <div class="p-3 border rounded bg-light shadow-sm">
@@ -112,26 +122,21 @@
                     </div>
                 `;
             }
-            
+
             displayHTML += `</div>`;
         }
-        
-        // Update the entire display
+
         orderDisplay.innerHTML = displayHTML;
     }
-    
-    // Function to handle order rotation
+
+    // Rotate current order (mark completed and remove from list)
     function rotateCurrentOrder() {
         if (!ordersData || ordersData.length === 0) return;
-        
-        // Get the current order
+
         const currentOrder = ordersData[0];
-        
-        // Remove it from our local array
         ordersData.shift();
-        
-        // Send request to mark as picked up
-        fetch("{{ route('order.autoPickUp') }}", {
+
+        fetch("{{ route('order.markCompleted') }}", {
             method: "POST",
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -140,106 +145,149 @@
             },
             body: JSON.stringify({ id: currentOrder.id })
         })
-        .then(() => {
-            // After successfully marking as picked up, refresh the display
-            countdown = 20;
-            refreshDisplay();
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            // Mark locally as completed
+            completedOrders.push(currentOrder.id);
+            localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
+
+            if (ordersData.length > 0) {
+                countdown = 20;
+                refreshDisplay();
+            } else {
+                const orderDisplay = document.getElementById('order-display');
+                orderDisplay.innerHTML = `
+                    <div class="text-muted fs-4 py-5">
+                        <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
+                        No orders ready for pickup today.
+                    </div>
+                `;
+            }
         })
         .catch(error => {
-            console.error('Error marking order as picked up:', error);
-            // Even on error, remove from display
-            countdown = 20;
-            refreshDisplay();
+            console.error('Error marking order as completed:', error);
+            if (ordersData.length > 0) {
+                countdown = 20;
+                refreshDisplay();
+            } else {
+                const orderDisplay = document.getElementById('order-display');
+                orderDisplay.innerHTML = `
+                    <div class="text-muted fs-4 py-5">
+                        <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
+                        No orders ready for pickup today.
+                    </div>
+                `;
+            }
         });
     }
-    
-    // Initial display
-    refreshDisplay();
-    
-    // Set up countdown timer
+
+    // Fetch ready orders from server via AJAX
+    function fetchReadyOrders() {
+        fetch('/ready-orders')
+            .then(res => res.json())
+            .then(data => {
+                // Filter out completed locally
+                completedOrders = JSON.parse(localStorage.getItem('completedOrders') || '[]');
+                let filtered = data.filter(order => !completedOrders.includes(order.id));
+                filtered = filterTodayOrders(filtered);
+
+                if (filtered.length === 0) {
+                    localStorage.setItem('allOrdersCompletedAt', Date.now().toString());
+                    allOrdersCompleted = true;
+                } else {
+                    allOrdersCompleted = false;
+                }
+
+                ordersData = filtered;
+                refreshDisplay();
+            })
+            .catch(err => console.error('Error fetching ready orders:', err));
+    }
+
+    // Check if all orders were completed today (from localStorage timestamp)
+    const lastCompletedTimestamp = localStorage.getItem('allOrdersCompletedAt');
+    if (lastCompletedTimestamp) {
+        const lastCompleted = new Date(parseInt(lastCompletedTimestamp));
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        if (lastCompleted >= todayStart) {
+            allOrdersCompleted = true;
+        }
+    }
+
+    // Initial fetch on page load
+    fetchReadyOrders();
+
+    // Countdown timer every second
     setInterval(() => {
         countdown--;
-        
-        // Update the countdown display if it exists
+
         const countdownEl = document.getElementById('countdown');
-        if (countdownEl) {
-            countdownEl.textContent = countdown;
-        }
-        
-        // When countdown reaches zero, rotate to next order
+        if (countdownEl) countdownEl.textContent = countdown;
+
         if (countdown <= 0) {
             rotateCurrentOrder();
+            countdown = 20; // reset countdown for next order
         }
     }, 1000);
-    
-    // Set up real-time updates
+
+    // Polling: fetch ready orders every 10 seconds to get updates
+    setInterval(fetchReadyOrders, 10000);
+
+    // Pusher real-time updates (optional, keep if needed)
     try {
         const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
             cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
             encrypted: true
         });
-        
+
         const channel = pusher.subscribe('orders');
-        
-        // Listen for new ready orders
+
         channel.bind('order.ready', function(data) {
+            if (allOrdersCompleted) return;
+
             const newOrder = data.order;
-            
-            // Check if this order is from today
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
             const orderDate = new Date(newOrder.ready_at);
             orderDate.setHours(0, 0, 0, 0);
-            
-            if (orderDate.getTime() !== today.getTime()) {
-                return; // Skip orders not from today
-            }
-            
-            // Check if this order is already in our list
-            const existingIndex = ordersData.findIndex(o => o.id === newOrder.id);
-            
-            if (existingIndex === -1) {
-                // Add new order to the end
+
+            if (orderDate.getTime() !== today.getTime()) return;
+
+            // If order not already in list or completed
+            if (!ordersData.find(o => o.id === newOrder.id) && !completedOrders.includes(newOrder.id)) {
                 ordersData.push(newOrder);
-                
+
                 // Play notification sound
                 const audio = new Audio('/sounds/notification.mp3');
                 audio.play().catch(e => console.log('Audio play prevented: ' + e));
-                
-                // Refresh the display
+
+                // Show alert
+                const flash = document.createElement('div');
+                flash.className = 'alert alert-success alert-dismissible fade show';
+                flash.innerHTML = `
+                    <strong>New Order Ready!</strong> Order #${newOrder.order_number} has been added to the queue.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.querySelector('.container').prepend(flash);
+                setTimeout(() => flash.remove(), 3000);
+
                 refreshDisplay();
             }
         });
-        
-        // Listen for order pickup events
+
         channel.bind('order.pickedUp', function(data) {
-            // Remove the picked up order from our list
             ordersData = ordersData.filter(order => order.id !== data.orderId);
-            
-            // Refresh the display
             refreshDisplay();
         });
     } catch (e) {
         console.error('Pusher setup failed:', e);
     }
-    
-    // Function to periodically check for order updates from the server
-    function fetchLatestOrders() {
-        fetch("{{ route('api.orders.ready') }}")
-            .then(response => response.json())
-            .then(data => {
-                // Filter to get only today's orders
-                ordersData = filterTodayOrders(data);
-                refreshDisplay();
-            })
-            .catch(error => {
-                console.error('Error fetching latest orders:', error);
-            });
-    }
-    
-    // Fetch latest orders every 30 seconds
-    setInterval(fetchLatestOrders, 30000);
 });
 </script>
+
+
 @endsection

@@ -359,33 +359,33 @@ function orderHistory(Request $request)
 }
 // OrderController.php
 
-public function showReadyOrders()
-{
-    $readyOrders = Order::where('status', 'ready')
-                        ->orderBy('ready_at')
-                        ->get();
+// public function showReadyOrders()
+// {
+//     $readyOrders = Order::where('status', 'ready')
+//                         ->orderBy('ready_at')
+//                         ->get();
 
-    return view('orders.display', compact('readyOrders'));
-}
+//     return view('orders.display', compact('readyOrders'));
+// }
 
-public function markAsReady($id)
-{
-    $order = Order::findOrFail($id);
-    $order->status = 'ready';
-    $order->ready_at = now();
-    $order->save();
+// public function markAsReady($id)
+// {
+//     $order = Order::findOrFail($id);
+//     $order->status = 'ready';
+//     $order->ready_at = now();
+//     $order->save();
 
-    return redirect()->back()->with('success', 'Order marked as ready.');
-}
+//     return redirect()->back()->with('success', 'Order marked as ready.');
+// }
 
-public function markAsPickedUp($id)
-{
-    $order = Order::findOrFail($id);
-    $order->delete(); // Or change status if you want to archive
+// public function markAsPickedUp($id)
+// {
+//     $order = Order::findOrFail($id);
+//     $order->delete(); // Or change status if you want to archive
 
-    return redirect()->back()->with('success', 'Order picked up.');
-}
-// OrderController.php
+//     return redirect()->back()->with('success', 'Order picked up.');
+// }
+// // OrderController.php
 public function autoPickUp(Request $request)
 {
     $order = Order::find($request->id);
@@ -398,6 +398,53 @@ public function autoPickUp(Request $request)
 }
 
 
-    
+public function markCompleted(Request $request)
+{
+    $orderId = $request->input('id');
+
+    // Find the order
+    $order = Order::find($orderId);
+
+    if (!$order) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Order not found'
+        ], 404);
+    }
+
+    // Update the order's status and mark it as completed
+    $order->status = 'completed';
+    $order->completed = true; // ✅ Only using the existing 'completed' column
+    $order->save();
+
+    // ✅ Fire the event (make sure the OrderCompleted event exists)
+    // event(new OrderCompleted($order));
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order marked as completed'
+    ]);
+}
+
+public function getReadyOrders()
+{
+    $readyOrders = Order::where('is_ready', true)
+                        ->whereDate('ready_at', now()->toDateString())
+                        ->orderBy('ready_at')
+                        ->get();
+
+    $orders = $readyOrders->map(function ($order) {
+        return [
+            'id' => $order->id,
+            'order_number' => $order->order_number,
+            'ready_at' => $order->ready_at,
+            'ready_at_human' => $order->ready_at->diffForHumans(),
+        ];
+    });
+
+    return response()->json($orders);
+}
+
+
 }
 

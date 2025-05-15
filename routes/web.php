@@ -152,3 +152,5 @@ Route::get('/print-ordernumber/{orderNumber}', function ($orderNumber) {
 
 
 Route::get('/cashier/receipt/{id}', [CashierController::class, 'generateReceipt'])->name('cashier.generateReceipt');
+Route::post('/orders/mark-completed', [OrderController::class, 'markCompleted'])->name('order.markCompleted');
+Route::get('/ready-orders', [OrderController::class, 'getReadyOrders'])->name('order.getReadyOrders');
