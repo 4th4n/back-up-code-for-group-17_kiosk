@@ -23,22 +23,6 @@ class CashierController extends Controller
         return view('cashier.index', compact('orders', 'totalAmount'));
     }
 
-    // Mark order as completed (paid)
-    // public function complete($id)
-    // {
-    //     $order = Order::findOrFail($id);
-    
-    //     if ($order->status !== 'paid') {
-    //         // Update the status to 'paid'
-    //         $order->status = 'paid';
-    //         $order->save(); // Save changes to the database
-    
-    //         // Redirect to the receipt page for this order
-    //         return redirect()->route('cashier.generateReceipt', $order->id)->with('success', 'Order marked as paid successfully.');
-    //     }
-    
-    //     return redirect()->route('cashier.index')->with('info', 'Order is already paid.');
-    // }
 public function complete($id)
 {
     DB::beginTransaction();
@@ -62,11 +46,11 @@ public function complete($id)
                 // Print header
                 $printer->setJustification(Printer::JUSTIFY_CENTER);
                 $printer->setTextSize(2, 2);
-                $printer->text("BUSINESS NAME\n"); // Replace with your business name
+                $printer->text("SCHOOL CANTEEN\n"); // Replace with your business name
                 $printer->setTextSize(1, 1);
-                $printer->text("Address Line 1\n"); // Replace with your address
-                $printer->text("Address Line 2\n"); // Replace with your address
-                $printer->text("Tel: 123-456-7890\n\n"); // Replace with your phone
+                // $printer->text("Address Line 1\n"); // Replace with your address
+                // $printer->text("Address Line 2\n"); // Replace with your address
+                // $printer->text("Tel: 123-456-7890\n\n"); // Replace with your phone
                 
                 // Receipt title
                 $printer->setEmphasis(true);
@@ -90,19 +74,19 @@ public function complete($id)
                     $subtotal = number_format($item->pivot->quantity * $item->pivot->price, 2);
                     
                     $printer->text($item->pivot->quantity . " x " . $itemName . "\n");
-                    $printer->text("   ₱" . $price . " each = ₱" . $subtotal . "\n");
+                    // $printer->text("   " . $price . " each = " . $subtotal . "\n");
                 }
                 
                 // Totals
                 $printer->text("------------------------------\n");
-                $printer->text("SUBTOTAL: ₱" . number_format($order->total_price, 2) . "\n");
+                $printer->text("SUBTOTAL: " . number_format($order->total_price, 2) . "\n");
                 
                 if (isset($order->tax_amount)) {
-                    $printer->text("TAX: ₱" . number_format($order->tax_amount, 2) . "\n");
+                    $printer->text("TAX: " . number_format($order->tax_amount, 2) . "\n");
                 }
                 
                 $printer->setEmphasis(true);
-                $printer->text("TOTAL: ₱" . number_format($order->total_price, 2) . "\n");
+                $printer->text("TOTAL: " . number_format($order->total_price, 2) . "\n");
                 $printer->setEmphasis(false);
                 
                 $printer->text("==============================\n");
@@ -204,7 +188,6 @@ public function markOrderReady(Request $request)
         $order->is_ready = true;
         $order->ready_at = now();
         $order->save();
-
         return response()->json([
             'success' => true,
             'message' => 'Order marked as ready successfully',

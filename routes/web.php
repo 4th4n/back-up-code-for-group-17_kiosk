@@ -123,34 +123,54 @@ Route::get('/api/orders/ready', 'OrderController@getReadyOrders')->name('api.ord
 
 use App\Models\Order;
 
+// Route::get('/print-ordernumber/{orderNumber}', function ($orderNumber) {
+//     $order = Order::with('items')->where('order_number', $orderNumber)->firstOrFail();
+
+//     $receipt = "==============================\n";
+//     $receipt .= "       ORDER Number\n";
+//     $receipt .= "==============================\n";
+//     $receipt .= "Order Number: #{$order->order_number}\n\n";
+
+//     foreach ($order->items as $item) {
+//         $itemName = $item->name ?? 'Unknown Item';
+//         $line = "{$item->pivot->quantity} x {$itemName}";
+//         $line = str_pad($line, 25);
+//         $line .= number_format($item->pivot->quantity * $item->pivot->price, 2);
+//         $receipt .= $line . "\n";
+//     }
+
+//     $receipt .= "\n------------------------------\n";
+//     $receipt .= "TOTAL: ₱" . number_format($order->total_price, 2) . "\n";
+//     $receipt .= "==============================\n";
+//     $receipt .= "Thank you for your order!\n";
+//     $receipt .= "Keep this for your reference.\n";
+//     $receipt .= "\n\n\n";
+
+//     return response($receipt)
+//         ->header('Content-Type', 'text/plain');
+// })->name('order.print');
+
 Route::get('/print-ordernumber/{orderNumber}', function ($orderNumber) {
-    $order = Order::with('items')->where('order_number', $orderNumber)->firstOrFail();
+    $order = Order::where('order_number', $orderNumber)->firstOrFail();
 
     $receipt = "==============================\n";
-    $receipt .= "       ORDER Number\n";
-    $receipt .= "==============================\n";
-    $receipt .= "Order Number: #{$order->order_number}\n\n";
+    $receipt .= "        ORDER NUMBER\n";
+    $receipt .= "==============================\n\n";
 
-    foreach ($order->items as $item) {
-        $itemName = $item->name ?? 'Unknown Item';
-        $line = "{$item->pivot->quantity} x {$itemName}";
-        $line = str_pad($line, 25);
-        $line .= number_format($item->pivot->quantity * $item->pivot->price, 2);
-        $receipt .= $line . "\n";
-    }
+    // Simulate larger text by adding space and border
+    $receipt .= "      ##################\n";
+    $receipt .= "      #   #{$order->order_number}   #\n";
+    $receipt .= "      ##################\n\n";
 
-    $receipt .= "\n------------------------------\n";
-    $receipt .= "TOTAL: ₱" . number_format($order->total_price, 2) . "\n";
-    $receipt .= "==============================\n";
     $receipt .= "Thank you for your order!\n";
-    $receipt .= "Keep this as your receipt.\n";
+    $receipt .= "Keep this for your reference.\n";
     $receipt .= "\n\n\n";
 
     return response($receipt)
         ->header('Content-Type', 'text/plain');
 })->name('order.print');
 
-
 Route::get('/cashier/receipt/{id}', [CashierController::class, 'generateReceipt'])->name('cashier.generateReceipt');
 Route::post('/orders/mark-completed', [OrderController::class, 'markCompleted'])->name('order.markCompleted');
 Route::get('/ready-orders', [OrderController::class, 'getReadyOrders'])->name('order.getReadyOrders');
+Route::post('/items/reset-food-quantities', [ItemController::class, 'resetFoodQuantities'])->name('items.reset-food-quantities');

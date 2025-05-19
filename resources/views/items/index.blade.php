@@ -149,57 +149,73 @@
     }
 </style>
 <script>
-// Function to check time and reset food quantities if needed
 function checkTimeAndResetFood() {
+    const forceReset = false; // Gawin mong false kapag hindi ka na nagte-test
+
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
     console.log(`Current time: ${hours}:${minutes}`);
 
-    // FOR TESTING: Force reset regardless of time (comment out after testing)
-    const forceReset = true;
-
-    // Check if it's 4:00 PM (16:00) or if we're forcing reset for testing
-    if ((hours === 16 && minutes === 0) || forceReset) {
+    // Check if it's 5:00 PM (17:00) or if we're forcing reset for testing
+    if ((hours === 17 && minutes === 0) || forceReset) {
         console.log('Condition met! Attempting to reset food quantities...');
         
-        // Send AJAX request to reset food quantities
-        fetch('{{ route("items.reset-food") }}', {
+        fetch('{{ route("items.reset-food-quantities") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
             }
-            3
         })
         .then(response => {
             console.log('Response received:', response);
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             return response.json();
         })
         .then(data => {
             console.log('Data received:', data);
             if (data.success) {
                 console.log(data.message);
-                // Success message logged, no alert, no page reload
+                console.log('Affected items:', data.affected);
                 
-                // Option: If you need to update the UI without page reload,
-                // you could implement that here instead:
-                // updateFoodQuantitiesDisplay();
+                showSuccessMessage(`${data.message}`);
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                console.error('Server returned error:', data.message || 'Unknown error');
             }
         })
         .catch(error => {
             console.error('Error resetting food quantities:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
         });
+    } else {
+        console.log(`Time condition not met. Current: ${hours}:${minutes}, Target: 17:00 or forceReset: ${forceReset}`);
     }
 }
 
-// For testing - execute immediately
 console.log('Script loaded, executing check...');
 checkTimeAndResetFood();
 
-// Set interval to check every minute (for normal operation)
-setInterval(checkTimeAndResetFood, 60000);
+const intervalId = setInterval(checkTimeAndResetFood, 60000);
+
+window.addEventListener('beforeunload', function() {
+    clearInterval(intervalId);
+});
 </script>
+
+
 
 <script>
     function confirmDelete(button) {
